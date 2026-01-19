@@ -58,12 +58,14 @@ This project is configured to deploy to Cloudflare Pages. See the deployment sec
      - Build command: `npm run build`
      - Build output directory: `dist`
    - Save and Deploy
+   - After deployment, add custom domain `docs.yomemo.ai` in project settings
 
 2. **Via Wrangler CLI**:
    ```bash
    npm run build
    wrangler pages deploy dist --project-name=yomemo-doc
    ```
+   Then add custom domain `docs.yomemo.ai` in Cloudflare Pages settings
 
 3. **Via GitHub Actions**:
    - Configure GitHub Secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`

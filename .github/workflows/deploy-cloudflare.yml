@@ -30,6 +30,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: yomemo-doc
+          # Custom domain: docs.yomemo.ai
           directory: dist
           # Optional: Set a custom branch name
           # branch: main

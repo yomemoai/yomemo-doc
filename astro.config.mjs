@@ -8,6 +8,8 @@ import mermaid from "astro-mermaid";
 export default defineConfig({
   // Static site output (default for Starlight)
   output: 'static',
+  // Site URL for canonical URLs and sitemap generation
+  site: 'https://docs.yomemo.ai',
   integrations: [
     starlight({
       title: "Memo Docs",
