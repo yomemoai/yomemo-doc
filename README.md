@@ -57,8 +57,11 @@ This project is configured to deploy to Cloudflare Pages. See the deployment sec
    - Build settings:
      - Build command: `npm run build`
      - Build output directory: `dist`
+     - **Deploy command**: **留空**（不要设置任何值，Cloudflare Pages 会自动部署）
    - Save and Deploy
    - After deployment, add custom domain `docs.yomemo.ai` in project settings
+   
+   **重要**: 如果遇到部署错误，请检查 Settings → Builds & deployments → Deploy command 是否为空
 
 2. **Via Wrangler CLI**:
    ```bash

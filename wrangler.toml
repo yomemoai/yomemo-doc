@@ -1,9 +1,10 @@
 # Cloudflare Pages 配置文件
-# 如果使用 Wrangler CLI 部署，需要此文件
+# 注意：如果通过 Cloudflare Dashboard 连接 Git，不需要此文件
+# 此文件仅用于 Wrangler CLI 手动部署
 
 name = "yomemo-doc"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
 
-# 注意：Cloudflare Pages 通常不需要 wrangler.toml
-# 这个文件主要用于 Wrangler CLI 部署
-# 如果使用 Cloudflare Dashboard 或 GitHub Actions，可以忽略此文件
+# 如果使用 Wrangler CLI 部署 Pages，使用以下命令：
+# wrangler pages deploy dist --project-name=yomemo-doc
