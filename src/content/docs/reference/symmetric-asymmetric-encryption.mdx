@@ -1,0 +1,119 @@
+---
+title: Symmetric vs Asymmetric Encryption
+description: Understand the difference between symmetric and asymmetric encryption and why we use hybrid encryption
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+The Memo SDK uses a **hybrid encryption approach** that combines both symmetric and asymmetric encryption. Understanding the difference between these two types of encryption helps explain why this approach is both secure and efficient.
+
+## Symmetric Encryption
+
+**Symmetric encryption** uses the same key for both encryption and decryption.
+
+### Characteristics
+
+- ✅ **Same key** used for both encryption and decryption
+- ✅ **Fast**, suitable for encrypting large amounts of data
+- ⚠️ **Key needs secure transmission** (this is why we use RSA to encrypt the AES key)
+
+### Example: AES
+
+AES (Advanced Encryption Standard) is the most common symmetric encryption algorithm:
+
+```go
+// AES symmetric encryption
+aesKey := generateKey()           // Same key
+cipherData := aes.Encrypt(data, aesKey)  // Encrypt with key
+plainData := aes.Decrypt(cipherData, aesKey)  // Decrypt with same key
+```
+
+### Common Symmetric Algorithms
+
+- **AES** (Advanced Encryption Standard) - Used by Memo SDK
+- DES, 3DES
+- ChaCha20
+
+## Asymmetric Encryption
+
+**Asymmetric encryption** uses a pair of keys: a public key and a private key.
+
+### Characteristics
+
+- ✅ **Public and private keys** are a pair, different purposes
+- ✅ **Public key encrypts**, private key decrypts
+- ✅ **Private key signs**, public key verifies
+- ⚠️ **Slow**, not suitable for encrypting large amounts of data
+
+### Example: RSA
+
+RSA is the most common asymmetric encryption algorithm:
+
+```go
+// RSA asymmetric encryption
+publicKey, privateKey := generateKeyPair()  // A key pair
+cipherData := rsa.Encrypt(data, publicKey)   // Encrypt with public key
+plainData := rsa.Decrypt(cipherData, privateKey)  // Decrypt with private key
+```
+
+### Common Asymmetric Algorithms
+
+- **RSA** - Used by Memo SDK
+- ECC (Elliptic Curve Cryptography)
+- ElGamal
+
+## Comparison
+
+| Feature                  | Symmetric (AES)                          | Asymmetric (RSA)                                    |
+| ------------------------ | ---------------------------------------- | --------------------------------------------------- |
+| Speed                     | ✅ Very fast                             | ⚠️ Slow (100-1000x slower than AES)                |
+| Key Management            | ⚠️ Need secure key transmission          | ✅ Public key can be public                         |
+| Data Size Limit           | ✅ Unlimited                             | ⚠️ Limited (2048-bit key can only encrypt 245 bytes) |
+| Use Case                  | Encrypt large data                       | Encrypt small data, key exchange, signing           |
+| Key Distribution          | ⚠️ Challenging                           | ✅ Easy (public key can be shared)                  |
+
+## Why Use Hybrid Encryption?
+
+The Memo SDK uses **hybrid encryption** to combine the best of both worlds:
+
+<Aside type="tip">
+Hybrid encryption uses symmetric encryption for data (fast) and asymmetric encryption for the key (secure key exchange).
+</Aside>
+
+### Hybrid Encryption Advantages
+
+1. **Use AES (symmetric)** to encrypt large data → Fast
+2. **Use RSA (asymmetric)** to encrypt AES key → Solves key transmission problem
+3. **Combines both advantages**: secure and efficient
+
+### How It Works in Memo SDK
+
+```go
+// 1. Generate AES key (symmetric encryption)
+aesKey := make([]byte, 32)  // Same key for encryption and decryption
+
+// 2. Encrypt data with AES (symmetric encryption)
+cipherData := aes.Encrypt(data, aesKey)
+
+// 3. Encrypt AES key with RSA public key (asymmetric encryption)
+encryptedKey := rsa.Encrypt(aesKey, publicKey)
+
+// Decryption:
+// 1. Decrypt AES key with RSA private key (asymmetric decryption)
+aesKey := rsa.Decrypt(encryptedKey, privateKey)
+
+// 2. Decrypt data with AES key (symmetric decryption)
+data := aes.Decrypt(cipherData, aesKey)
+```
+
+## Summary
+
+- **Symmetric encryption (AES)**: Fast, efficient for large data, but requires secure key distribution
+- **Asymmetric encryption (RSA)**: Solves key distribution problem, but slow for large data
+- **Hybrid encryption**: Best of both worlds - fast data encryption with secure key exchange
+
+## Related Topics
+
+- Learn about the [complete encryption flow](/guides/how-it-works/) in the Memo SDK
+- Understand [GCM mode](/reference/gcm/) used for symmetric encryption
+- Explore [RSA OAEP padding](/reference/rsa-oaep/) used for asymmetric encryption

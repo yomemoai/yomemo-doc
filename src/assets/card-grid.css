@@ -1,0 +1,15 @@
+.sl-card-grid {
+	align-items: stretch;
+}
+
+.sl-card-grid > * {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.sl-card-grid .sl-card {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}

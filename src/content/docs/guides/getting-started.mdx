@@ -1,0 +1,260 @@
+---
+title: Getting Started
+description: Learn how to integrate memo-go-sdk into your Go application with end-to-end encryption.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+The Memo SDK provides a secure, encrypted memory layer for your applications. All content is encrypted client-side using AES and signed with RSA before being sent to the server, ensuring your data remains private and secure.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+- A Memo API Key
+- A private RSA key (or generate one using the SDK)
+- Go 1.19 or later installed
+
+## Quick Start
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Get your API Key</h3>
+      Obtain your API key from your Memo dashboard. You'll need this to authenticate with the Memo service.
+      
+      <Aside type="tip">
+        Keep your API key secure and never commit it to version control. Use environment variables in production.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Install the Go SDK</h3>
+      Install the SDK using Go modules:
+      
+      ```bash
+      go get github.com/xxlv/memo-go-sdk
+      ```
+    </li>
+
+    <li>
+      <h3>Generate or Load Your Private Key</h3>
+      You need an RSA private key for encryption. Generate one if you don't have it:
+      
+      ```go
+      package main
+      
+      import (
+          "fmt"
+          "os"
+          "github.com/xxlv/memo-go-sdk"
+      )
+      
+      func GenerateInitialKey() {
+          // Generate 2048-bit RSA key pair
+          priv, _, _ := memo.GenerateKeyPair(2048)
+          
+          // Convert to PEM format
+          pemStr, _ := memo.PrivateKeyToPEM(priv)
+          
+          // Save to file (with secure permissions)
+          os.WriteFile("private.pem", []byte(pemStr), 0600)
+          fmt.Println("Key pair generated and saved to private.pem")
+      }
+      ```
+      
+      <Aside type="caution">
+        Keep your private key secure! Never share it or commit it to version control. The private key is used to decrypt your memories.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Initialize the Client</h3>
+      Create a client instance with your API key, private key, and server URL:
+      
+      ```go
+      package main
+      
+      import (
+          "context"
+          "fmt"
+          "log"
+          "os"
+          "github.com/xxlv/memo-go-sdk"
+      )
+      
+      func main() {
+          // Your API key
+          apiKey := "sk_3e0846df-ac5e-4786-b0b6-22b91bfadb6f"
+          
+          // Server URL (point to your Memo server)
+          serverURL := "http://127.0.0.1:8080"
+          
+          // Read your private key from file
+          privKeyPEM, err := os.ReadFile("private.pem")
+          if err != nil {
+              log.Fatal("Please generate private.pem file first")
+          }
+          
+          // Initialize Memo Client
+          client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
+          if err != nil {
+              log.Fatalf("Failed to initialize client: %v", err)
+          }
+          
+          fmt.Println("Client initialized successfully!")
+      }
+      ```
+    </li>
+
+    <li>
+      <h3>Save a Memory</h3>
+      Store encrypted memories with optional metadata:
+      
+      ```go
+      ctx := context.Background()
+      content := "my coffee machine password is 8888"
+      
+      err := client.Add(ctx, memo.AddOpts{
+          Handle:      "testst-1",
+          Description: "Coffee machine credentials",
+          Content:     content,
+          Metadata: map[string]string{
+              "memory_id": "1",
+              "token_size": strconv.Itoa(len(content)),
+          },
+      })
+      
+      if err != nil {
+          log.Fatalf("Failed to save: %v", err)
+      }
+      
+      fmt.Println("✅ Memory saved (encrypted and signed)")
+      ```
+      
+      <Aside type="note">
+        The content is automatically encrypted using AES and signed with RSA before being sent to the server. The server only stores the encrypted content.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Retrieve and Decrypt Memories</h3>
+      Query and decrypt your stored memories:
+      
+      ```go
+      memories, err := client.GetMemories(ctx, memo.QueryOptions{
+          PageSize:  10,
+          Cursor:    "",
+          Filters:   map[string]interface{}{"memory_id": "1"},
+          Ascending: true,
+      })
+      
+      if err != nil {
+          log.Fatalf("Failed to get memories: %v", err)
+      }
+      
+      for _, m := range memories {
+          fmt.Printf("ID: %s | Created: %v\n", m.ID, m.CreatedAt)
+          fmt.Printf("Content: %s\n", m.Content)
+          fmt.Println("-----------------------------------")
+      }
+      ```
+    </li>
+  </ol>
+</Steps>
+
+## Complete Example
+
+Here's a complete working example that demonstrates the full workflow:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"strconv"
+
+	"github.com/xxlv/memo-go-sdk"
+)
+
+func main() {
+	// Prepare environment
+	apiKey := "sk_3e0846df-ac5e-4786-b0b6-22b91bfadb6f"
+	serverURL := "http://127.0.0.1:8080"
+
+	// Read private key
+	privKeyPEM, err := os.ReadFile("private.pem")
+	if err != nil {
+		log.Fatal("Please generate private.pem file first")
+	}
+
+	// Initialize Memo Client
+	client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize client: %v", err)
+	}
+
+	// Save a memory
+	content := "my coffee machine password is 8888"
+	fmt.Println("Encrypting and uploading memory...")
+	
+	desc := fmt.Sprintf("This is a test description %d", rand.Intn(1000))
+	tokenSize := len(content)
+	ctx := context.Background()
+
+	err = client.Add(ctx, memo.AddOpts{
+		Handle:      "testst-1",
+		Description: desc,
+		Content:     content,
+		Metadata:    map[string]string{
+			"memory_id": "1",
+			"token_size": strconv.Itoa(tokenSize),
+		},
+	})
+	
+	if err != nil {
+		log.Fatalf("Failed to save: %v", err)
+	} else {
+		fmt.Println("✅ Memory saved to SaaS (server only holds encrypted content)")
+	}
+
+	// Get and decrypt memories
+	fmt.Println("Syncing and decrypting memory from cloud...")
+	memories, err := client.GetMemories(ctx, memo.QueryOptions{
+		PageSize:  10,
+		Cursor:    "",
+		Filters:   map[string]interface{}{"memory_id": "1"},
+		Ascending: true,
+	})
+	
+	if err != nil {
+		log.Fatalf("Failed to get memories: %v", err)
+	}
+
+	for _, m := range memories {
+		fmt.Printf("ID: %s | Time: %v\n", m.ID, m.CreatedAt)
+		fmt.Printf("Original content: %s\n", m.Content)
+		fmt.Println("-----------------------------------")
+	}
+}
+```
+
+## Security Features
+
+<Aside type="tip">
+  **End-to-End Encryption**: All content is encrypted client-side using AES before being sent to the server. The server never sees your plaintext data.
+</Aside>
+
+- **Client-Side Encryption**: Content is encrypted using AES before upload
+- **RSA Signing**: All data is signed with your private key for authenticity
+- **Secure Storage**: Server only stores encrypted content
+- **Client-Side Decryption**: Content is decrypted locally when retrieved
+
+## Next Steps
+
+- Learn about [querying and filtering memories](/docs/reference/example)
+- Explore [advanced features](/docs/features/security)
+- Check out the [API reference](/docs/api/reference)

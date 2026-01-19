@@ -1,0 +1,219 @@
+---
+title: How It Works
+description: Understand the encryption and decryption flow of the Memo SDK
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The Memo SDK uses a hybrid encryption architecture combining symmetric and asymmetric encryption to provide secure, end-to-end encrypted storage for your memories. This page explains the technical details of how data is encrypted, stored, and decrypted.
+
+## Overview
+
+The SDK uses a **hybrid encryption approach**:
+- **AES-256-GCM** (symmetric encryption) for encrypting data of any size
+- **RSA** (asymmetric encryption) for encrypting the AES key
+- **RSA signatures** for data integrity verification
+
+<Aside type="tip">
+This hybrid approach combines the speed of symmetric encryption with the security benefits of asymmetric encryption, allowing efficient encryption of large amounts of data while maintaining strong security.
+</Aside>
+
+## 1. PackData Flow (Encryption)
+
+When you save a memory, the SDK encrypts your content using the following process:
+
+```mermaid
+flowchart TD
+    A[Start: Raw Data] --> B[Generate Random AES-256 Key<br/>32 bytes]
+    B --> C[Generate Random Nonce<br/>GCM Mode]
+    C --> D[Encrypt Data with AES-GCM<br/>cipherData = GCM.Seal]
+    D --> E[Base64 Encode Encrypted Data<br/>dataBase64]
+    E --> F[Encrypt AES Key with RSA Public Key<br/>RSA-OAEP]
+    F --> G[Base64 Encode Encrypted Key<br/>keyBase64]
+    G --> H[Calculate SHA256 Hash of dataBase64]
+    H --> I[Sign Hash with RSA Private Key<br/>PKCS1v15]
+    I --> J[Base64 Encode Signature<br/>sigBase64]
+    J --> K[Build SecurePackage<br/>Data, Key, Signature]
+    K --> L[JSON Serialize]
+    L --> M[Base64 Encode Final Package]
+    M --> N[Return: cipherTextBase64]
+
+    style A fill:#e1f5ff
+    style N fill:#c8e6c9
+    style B fill:#fff3e0
+    style F fill:#fff3e0
+    style I fill:#fff3e0
+```
+
+### Step-by-Step Process
+
+1. **Generate AES Key**: A random 256-bit (32-byte) AES key is generated for each encryption operation
+2. **Generate Nonce**: A random nonce is created for GCM mode (ensures uniqueness)
+3. **AES-GCM Encryption**: The raw data is encrypted using AES-256 in GCM mode
+4. **Base64 Encoding**: The encrypted data is Base64 encoded
+5. **RSA Encryption**: The AES key is encrypted using the RSA public key with OAEP padding
+6. **Digital Signature**: A SHA256 hash of the encrypted data is computed and signed with the RSA private key
+7. **Package Creation**: All components are assembled into a `SecurePackage` structure
+8. **Final Encoding**: The package is JSON serialized and Base64 encoded
+
+## 2. UnpackAndDecrypt Flow (Decryption)
+
+When retrieving memories, the SDK decrypts the encrypted content:
+
+```mermaid
+flowchart TD
+    A[Start: cipherTextBase64] --> B[Base64 Decode]
+    B --> C[JSON Parse SecurePackage]
+    C --> D{Check Key Field}
+
+    D -->|Has Key Field<br/>New Format| E[Base64 Decode Encrypted Key]
+    E --> F[Decrypt AES Key with RSA Private Key<br/>RSA-OAEP]
+    F --> G[Base64 Decode Encrypted Data]
+    G --> H[Create AES Cipher]
+    H --> I[Create GCM Mode]
+    I --> J[Extract Nonce and Ciphertext]
+    J --> K[Decrypt with AES-GCM<br/>GCM.Open]
+    K --> L[Return: Original Data]
+
+    D -->|No Key Field<br/>Legacy Format Compatible| M[Base64 Decode Data]
+    M --> N[Decrypt Directly with RSA Private Key<br/>RSA-OAEP]
+    N --> L
+
+    style A fill:#e1f5ff
+    style L fill:#c8e6c9
+    style F fill:#fff3e0
+    style K fill:#fff3e0
+    style N fill:#fff3e0
+```
+
+### Decryption Process
+
+1. **Decode Package**: Base64 decode and JSON parse the `SecurePackage`
+2. **Key Decryption**: Use RSA private key to decrypt the AES key (RSA-OAEP)
+3. **Data Decryption**: Use the decrypted AES key to decrypt the data with AES-GCM
+4. **Integrity Verification**: GCM mode automatically verifies data integrity during decryption
+5. **Legacy Support**: The SDK supports both new format (with separate key) and legacy format (direct RSA encryption)
+
+## 3. SaveMemory Complete Flow
+
+Here's the complete sequence when saving a memory:
+
+```mermaid
+sequenceDiagram
+    participant Client as SDK Client
+    participant PackData as PackData
+    participant AES as AES-GCM
+    participant RSA as RSA
+    participant Server as API Server
+
+    Client->>PackData: Raw content
+    PackData->>PackData: Generate random AES-256 key
+    PackData->>AES: Encrypt content with AES-GCM
+    AES-->>PackData: Encrypted data + nonce
+    PackData->>RSA: Encrypt AES key with public key
+    RSA-->>PackData: Encrypted key
+    PackData->>RSA: Sign data with private key
+    RSA-->>PackData: Signature
+    PackData->>PackData: Build SecurePackage
+    PackData->>PackData: JSON + Base64 encode
+    PackData-->>Client: cipherTextBase64
+    Client->>Server: POST /api/v1/memory<br/>with ciphertext
+    Server-->>Client: 200 OK
+```
+
+<Aside type="note">
+The server never sees your plaintext data. Only the encrypted ciphertext is transmitted and stored.
+</Aside>
+
+## 4. GetMemories Complete Flow
+
+When retrieving memories from the server:
+
+```mermaid
+sequenceDiagram
+    participant Client as SDK Client
+    participant Server as API Server
+    participant UnpackData as UnpackAndDecrypt
+    participant AES as AES-GCM
+    participant RSA as RSA
+
+    Client->>Server: GET /api/v1/memory
+    Server-->>Client: Return encrypted memory list
+    Client->>UnpackData: Decrypt each memory
+    UnpackData->>UnpackData: Base64 decode + JSON parse
+    UnpackData->>RSA: Decrypt AES key with private key
+    RSA-->>UnpackData: AES key
+    UnpackData->>AES: Decrypt data with AES-GCM
+    AES-->>UnpackData: Original content
+    UnpackData-->>Client: Decrypted content
+    Client->>Client: Display plaintext content
+```
+
+## 5. Hybrid Encryption Architecture
+
+The complete architecture diagram:
+
+```mermaid
+graph TB
+    subgraph "Encryption Flow (PackData)"
+        A1[Raw Data<br/>Any Length] --> A2[Generate AES-256 Key]
+        A2 --> A3[AES-GCM Encrypt Data]
+        A3 --> A4[Encrypted Data + Nonce]
+        A2 --> A5[RSA Public Key Encrypt AES Key]
+        A4 --> A6[Base64 Encode]
+        A5 --> A7[Base64 Encode]
+        A6 --> A8[SecurePackage]
+        A7 --> A8
+        A8 --> A9[RSA Private Key Sign]
+        A9 --> A10[Final Ciphertext Package]
+    end
+
+    subgraph "Decryption Flow (UnpackAndDecrypt)"
+        B1[Ciphertext Package] --> B2[Parse SecurePackage]
+        B2 --> B3[RSA Private Key Decrypt AES Key]
+        B3 --> B4[Get AES Key]
+        B2 --> B5[Base64 Decode Data]
+        B4 --> B6[AES-GCM Decrypt]
+        B5 --> B6
+        B6 --> B7[Raw Data]
+    end
+
+    subgraph "Key Management"
+        C1[RSA Key Pair<br/>2048/4096 bits] --> C2[Public Key: Encrypt AES Key]
+        C1 --> C3[Private Key: Decrypt AES Key<br/>Sign Data]
+    end
+
+    A5 -.-> C2
+    B3 -.-> C3
+    A9 -.-> C3
+
+    style A1 fill:#e1f5ff
+    style B7 fill:#c8e6c9
+    style C1 fill:#fff3e0
+```
+
+## GCM Mode
+
+The Memo SDK uses **AES-256-GCM** (Galois/Counter Mode) for encrypting your memories. GCM is an authenticated encryption mode that provides both encryption and data integrity verification in a single operation.
+
+<Aside type="tip">
+For a detailed explanation of GCM mode, including how it works, why we chose it, and implementation details, see the [GCM Mode Reference](/reference/gcm/).
+</Aside>
+
+## Encryption Types
+
+The Memo SDK uses **hybrid encryption** combining symmetric and asymmetric encryption. For detailed explanations, see:
+
+- [Symmetric vs Asymmetric Encryption](/reference/symmetric-asymmetric-encryption/) - Learn about the two types of encryption and why we use both
+- [RSA OAEP Padding](/reference/rsa-oaep/) - Understand the padding scheme used for RSA encryption
+
+## Key Points Summary
+
+1. **Hybrid Encryption**: Uses AES-256-GCM (symmetric) to encrypt data of any size, RSA (asymmetric) to encrypt the AES key
+2. **Symmetric Encryption (AES)**: Same key for encryption and decryption, fast, suitable for large data
+3. **Asymmetric Encryption (RSA)**: Public key encrypts, private key decrypts, solves key transmission problem, but slow
+4. **OAEP Padding**: Uses optimal asymmetric encryption padding scheme, more secure than PKCS#1 v1.5
+5. **Authenticated Encryption**: GCM mode provides data integrity and authentication, no additional HMAC needed
+6. **Digital Signatures**: Uses RSA private key to sign encrypted data, ensures data hasn't been tampered
+7. **Backward Compatibility**: Supports decryption of legacy format (direct RSA encryption)
+8. **Security**: Each encryption uses random AES key and Nonce, ensuring same content produces different ciphertext
