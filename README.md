@@ -64,15 +64,53 @@ This project is configured to deploy to Cloudflare Pages. See the deployment sec
    **重要**: 如果遇到部署错误，请检查 Settings → Builds & deployments → Deploy command 是否为空
 
 2. **Via Wrangler CLI**:
+   
+   **重要**: 首次部署前，需要先创建 Cloudflare Pages 项目：
    ```bash
-   npm run build
-   wrangler pages deploy dist --project-name=yomemo-doc
+   # 1. 确保已安装并登录 Wrangler
+   npm install -g wrangler
+   wrangler login
+   
+   # 2. 创建 Pages 项目（仅首次需要）
+   npm run pages:create
+   # 或者直接运行：
+   # wrangler pages project create yomemo-doc --production-branch=main
+   
+   # 3. 构建并部署
+   npm run deploy
+   # 或者分步执行：
+   # npm run build
+   # wrangler pages deploy dist --project-name=yomemo-doc
    ```
    Then add custom domain `docs.yomemo.ai` in Cloudflare Pages settings
+   
+   **注意**: 如果遇到 "Project not found" 错误，说明项目还未创建，请先执行步骤 2。
 
-3. **Via GitHub Actions**:
-   - Configure GitHub Secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
-   - Push to `main` branch to trigger automatic deployment
+3. **Via GitHub Actions** (自动部署，推荐用于 CI/CD):
+   
+   已配置 GitHub Actions 工作流，每次推送到 `main` 分支会自动部署。
+   
+   **设置步骤**:
+   1. 获取 Cloudflare API Token:
+      - 访问 [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+      - 点击 "Create Token" → 使用 "Edit Cloudflare Workers" 模板
+      - 或者创建自定义 token，需要以下权限：
+        - Account: Cloudflare Pages:Edit
+        - Zone: Zone:Read (如果需要自定义域名)
+   2. 获取 Account ID:
+      - 在 Cloudflare Dashboard 右侧边栏可以看到 Account ID
+   3. 配置 GitHub Secrets:
+      - 进入 GitHub 仓库 → Settings → Secrets and variables → Actions
+      - 添加以下 Secrets:
+        - `CLOUDFLARE_API_TOKEN`: 你的 Cloudflare API Token
+        - `CLOUDFLARE_ACCOUNT_ID`: 你的 Cloudflare Account ID
+   4. 推送代码到 `main` 分支，GitHub Actions 会自动触发部署
+   
+   **工作流文件**: `.github/workflows/deploy.yml`
+   
+   **注意**: 
+   - 首次部署前，需要先在 Cloudflare Pages 创建项目 `yomemo-doc`
+   - 可以通过 Dashboard 或运行 `wrangler pages project create yomemo-doc` 创建
 
 For more details, see the [Cloudflare Pages documentation](https://developers.cloudflare.com/pages/).
 
