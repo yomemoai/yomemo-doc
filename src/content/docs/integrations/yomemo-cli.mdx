@@ -1,0 +1,260 @@
+---
+title: CLI Integration
+description: Use the YoMemo CLI to sync local Markdown notes (e.g. Obsidian vaults) into encrypted YoMemo memories.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+`yomemo-cli` is the general command‑line toolkit for the [YoMemo](https://yomemo.ai/) ecosystem.
+
+The first capability it provides is a **local sync bridge**: it scans your local Markdown knowledge base (for example, an Obsidian vault), encrypts each note end‑to‑end on your machine, and uploads it to YoMemo so your AI tools can query it securely.
+
+> In short: **you can safely sync private content like journals, medical notes, or any sensitive information — everything is encrypted client‑side before upload.**
+
+<Aside type="caution">
+  File names are currently used as part of the memory description, so make sure your filenames do not contain any sensitive information.
+</Aside>
+
+## When to use the CLI
+
+Use `yomemo-cli` when:
+
+- You already store knowledge in local Markdown files (Obsidian, Logseq, plain folders, etc.)
+- You want that knowledge available to your AI agents/tools via YoMemo
+- You care about **zero‑trust encryption**: all content is encrypted on your machine using your own key before it touches the cloud
+
+If you want direct SDK or MCP integrations instead, see:
+
+- [Python MCP Integration](/docs/integrations/python-mcp/)
+- [Go SDK Integration](/docs/integrations/go-sdk/)
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- Python 3.9+ installed
+- A YoMemo API key
+- An RSA private key in PEM format (2048‑bit recommended)
+  - Example (OpenSSL):
+
+  ```bash
+  openssl genrsa -out private.pem 2048
+  ```
+
+<Aside type="tip">
+  Don't have an API key yet? Sign up at
+  <a href="https://yomemo.ai" target="_blank" rel="noreferrer">YoMemo</a> to get started.
+</Aside>
+
+## Installation
+
+Install the CLI from PyPI:
+
+```bash
+pip install yomemo-cli
+```
+
+This will install a `yomemo` command on your system:
+
+```bash
+yomemo --help
+```
+
+You should see the available subcommands:
+
+- `yomemo init`
+- `yomemo sync`
+- `yomemo status`
+
+## Quick Start
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Initialize the CLI</h3>
+      Run the init command to configure your API key and private key:
+
+      ```bash
+      yomemo init
+      ```
+
+      You will be prompted for:
+
+      - Your YoMemo API key
+      - Path to your RSA private key file (PEM), e.g. <code>~/keys/private.pem</code>
+
+      The CLI will create a config directory and store your settings:
+
+      - Config directory: <code>~/.yomemo/</code>
+      - Env file: <code>~/.yomemo/.env</code>
+
+      <Aside type="note">
+        The private key path is stored as an absolute path, and the key file itself is never uploaded.  
+        Only encrypted ciphertext and metadata are sent to YoMemo.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Run a one‑off sync</h3>
+
+      To sync a folder of Markdown notes:
+
+      ```bash
+      # Example: sync an Obsidian vault
+      yomemo sync ~/Documents/Obsidian/Vault
+
+      # Example: sync a general notes folder
+      yomemo sync ~/notes
+      ```
+
+      What happens:
+
+      - Recursively walks the target directory
+      - Ignores special folders like <code>.git</code>, <code>.obsidian</code>, <code>node_modules</code>
+      - Processes only <code>.md</code> files (empty files are skipped)
+      - Uses the **parent directory name** as the memory handle:
+        - <code>Vault/work/note.md</code> → handle <code>work</code>
+        - Top‑level files → handle <code>general</code>
+      - Encrypts each note and uploads it to YoMemo
+      - Records a hash + memory ID in a local SQLite database to avoid re‑uploading unchanged files
+    </li>
+
+    <li>
+      <h3>Enable real‑time sync</h3>
+
+      If you want YoMemo to track changes live while you edit notes, use watch mode:
+
+      ```bash
+      yomemo sync ~/Documents/Obsidian/Vault --watch
+      # or
+      yomemo sync ~/Documents/Obsidian/Vault -w
+      ```
+
+      Behavior:
+
+      - Performs a full scan once at startup
+      - Starts a filesystem watcher (using <code>watchdog</code>)
+      - On file create/modify events:
+        - Re‑runs the sync logic for that file
+      - Runs until you press <code>Ctrl + C</code>
+
+      This is ideal if you keep an Obsidian vault open and want YoMemo to stay in sync automatically.
+    </li>
+
+    <li>
+      <h3>Check sync status</h3>
+
+      To see what has been synced:
+
+      ```bash
+      yomemo status
+      ```
+
+      This prints a small dashboard showing:
+
+      - Total number of synced files
+      - Last sync time
+      - Local index (SQLite DB) size
+      - Config file location
+
+      <Aside type="tip">
+        The local state database is stored in <code>~/.yomemo/sync_state.db</code>.  
+        It tracks file hashes and memory IDs so repeated syncs are fast and idempotent.
+      </Aside>
+    </li>
+  </ol>
+</Steps>
+
+## How it works
+
+At a high level:
+
+1. **Local scan + hashing**
+   - The CLI walks your notes directory
+   - Computes a content hash for each Markdown file
+   - Compares it to the last known hash in <code>sync_state.db</code>
+   - Only changed or new files are uploaded
+
+2. **Client‑side encryption**
+   - Content is encrypted on your machine using AES‑GCM
+   - The AES key is encrypted with RSA‑OAEP using your public key
+   - The encrypted package is signed with your private key
+   - Only the encrypted payload + metadata are sent to the YoMemo API
+
+3. **Mapping to YoMemo memories**
+   - Each file becomes an encrypted memory in YoMemo
+   - Handles are derived from directory names (e.g. <code>work</code>, <code>personal</code>)
+   - Metadata includes the original relative path and token size
+
+On the YoMemo side, this looks just like any other encrypted memory: your AI tools can retrieve and decrypt it using your configured keys (via MCP, SDKs, etc.).
+
+## Configuration details
+
+After running <code>yomemo init</code>, the CLI writes an env file:
+
+```bash
+# ~/.yomemo/.env
+MEMO_API_KEY=your_api_key_here
+MEMO_PRIVATE_KEY_PATH=/absolute/path/to/private.pem
+```
+
+You normally don't have to edit this manually, but it's useful to know where it lives.
+
+<Aside type="caution">
+  Never commit <code>~/.yomemo/.env</code> or your private key files to version control.  
+  They should stay on your local machine only.
+</Aside>
+
+## Example workflows
+
+- **Obsidian vault → YoMemo → MCP**
+  - Use <code>yomemo sync --watch</code> to keep your Obsidian vault in sync
+  - Use the [Python MCP integration](/docs/integrations/python-mcp/) to let your AI assistant query those memories
+
+- **Project docs as memory**
+  - Point <code>yomemo sync</code> at a project <code>docs/</code> folder
+  - Use handles like <code>project-x</code>, <code>infra</code>, <code>runbooks</code> (derived from directories)
+  - Ask your AI tools questions like “What does the deployment pipeline look like for project X?”
+
+## Troubleshooting
+
+### “Not initialized” error
+
+If you see:
+
+```text
+Error: configuration not detected. Please run 'yomemo init' to initialize.
+```
+
+Run:
+
+```bash
+yomemo init
+```
+
+and make sure <code>~/.yomemo/.env</code> exists afterwards.
+
+### Private key read errors
+
+If the CLI cannot read your private key:
+
+- Double‑check the path you entered in <code>yomemo init</code>
+- Ensure the file exists and is readable (permissions like <code>600</code> are recommended)
+- Verify the file is a valid PEM‑encoded private key
+
+### API or network issues
+
+If API calls fail:
+
+- Verify your API key is correct and active
+- Ensure you can reach <code>https://api.yomemo.ai</code> from your machine
+- Re‑run with verbose logging (coming in future versions of the CLI)
+
+---
+
+## Next steps
+
+- Read the full [YoMemo CLI README](https://github.com/yomemoai/yomemo-cli) for advanced usage
+- Learn about [MCP integration](/docs/integrations/python-mcp/) to connect YoMemo directly to your AI assistants
+- Explore [How It Works](/docs/guides/how-it-works/) to understand the encryption architecture in depth
+

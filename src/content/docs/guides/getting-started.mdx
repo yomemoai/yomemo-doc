@@ -1,260 +1,229 @@
 ---
 title: Getting Started
-description: Learn how to integrate memo-go-sdk into your Go application with end-to-end encryption.
+description: Get started with YoMemo in minutes using the Python MCP integration - the easiest way to add encrypted memory to your AI assistants.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps, Aside, Card, CardGrid } from '@astrojs/starlight/components';
 
-The Memo SDK provides a secure, encrypted memory layer for your applications. All content is encrypted client-side using AES and signed with RSA before being sent to the server, ensuring your data remains private and secure.
+YoMemo provides a secure, encrypted memory layer for your AI applications. The easiest way to get started is using the **Python MCP integration**, which enables AI assistants like Claude and Cursor to save and retrieve encrypted memories seamlessly.
 
-## Prerequisites
+## Why YoMemo?
 
-Before you begin, make sure you have:
-- A Memo API Key
-- A private RSA key (or generate one using the SDK)
-- Go 1.19 or later installed
+<CardGrid>
+  <Card title="End-to-End Encryption" icon="forward-slash">
+    All memories are encrypted client-side using RSA-OAEP and AES-GCM. The server never sees your plaintext data.
+  </Card>
+  <Card title="AI Assistant Ready" icon="puzzle">
+    Built-in MCP server works out-of-the-box with Claude Desktop, Cursor, and other MCP-compatible tools.
+  </Card>
+  <Card title="Easy Integration" icon="rocket">
+    Get started in minutes with just a few configuration steps. No complex setup required.
+  </Card>
+  <Card title="User-Controlled Keys" icon="setting">
+    You manage your own encryption keys. The server cannot decrypt your data.
+  </Card>
+</CardGrid>
 
-## Quick Start
+## Quick Start with Python MCP
+
+The Python MCP integration is the recommended way to get started, especially if you're using AI assistants like Claude Desktop or Cursor.
 
 <Steps>
   <ol>
     <li>
-      <h3>Get your API Key</h3>
-      Obtain your API key from your Memo dashboard. You'll need this to authenticate with the Memo service.
-      
-      <Aside type="tip">
-        Keep your API key secure and never commit it to version control. Use environment variables in production.
-      </Aside>
-    </li>
-
-    <li>
-      <h3>Install the Go SDK</h3>
-      Install the SDK using Go modules:
+      <h3>Install the MCP Server</h3>
+      Use `uvx` to run the MCP server directly (no installation needed):
       
       ```bash
-      go get github.com/xxlv/memo-go-sdk
-      ```
-    </li>
-
-    <li>
-      <h3>Generate or Load Your Private Key</h3>
-      You need an RSA private key for encryption. Generate one if you don't have it:
-      
-      ```go
-      package main
-      
-      import (
-          "fmt"
-          "os"
-          "github.com/xxlv/memo-go-sdk"
-      )
-      
-      func GenerateInitialKey() {
-          // Generate 2048-bit RSA key pair
-          priv, _, _ := memo.GenerateKeyPair(2048)
-          
-          // Convert to PEM format
-          pemStr, _ := memo.PrivateKeyToPEM(priv)
-          
-          // Save to file (with secure permissions)
-          os.WriteFile("private.pem", []byte(pemStr), 0600)
-          fmt.Println("Key pair generated and saved to private.pem")
-      }
+      uvx yomemoai-mcp --help
       ```
       
-      <Aside type="caution">
-        Keep your private key secure! Never share it or commit it to version control. The private key is used to decrypt your memories.
+      Or install via `pip`:
+      
+      ```bash
+      pip install yomemoai-mcp
+      ```
+      
+      <Aside type="tip">
+        `uvx` is recommended as it automatically handles dependencies and doesn't require a global installation.
       </Aside>
     </li>
 
     <li>
-      <h3>Initialize the Client</h3>
-      Create a client instance with your API key, private key, and server URL:
+      <h3>Get Your API Key</h3>
+      Sign up at [YoMemoAI](https://yomemo.ai) to get your API key. You'll need this to authenticate with the service.
       
-      ```go
-      package main
-      
-      import (
-          "context"
-          "fmt"
-          "log"
-          "os"
-          "github.com/xxlv/memo-go-sdk"
-      )
-      
-      func main() {
-          // Your API key
-          apiKey := "sk_3e0846df-ac5e-4786-b0b6-22b91bfadb6f"
-          
-          // Server URL (point to your Memo server)
-          serverURL := "http://127.0.0.1:8080"
-          
-          // Read your private key from file
-          privKeyPEM, err := os.ReadFile("private.pem")
-          if err != nil {
-              log.Fatal("Please generate private.pem file first")
-          }
-          
-          // Initialize Memo Client
-          client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
-          if err != nil {
-              log.Fatalf("Failed to initialize client: %v", err)
-          }
-          
-          fmt.Println("Client initialized successfully!")
-      }
-      ```
+      <Aside type="caution">
+        Keep your API key secure and never commit it to version control. Use environment variables or secure configuration files.
+      </Aside>
     </li>
 
     <li>
-      <h3>Save a Memory</h3>
-      Store encrypted memories with optional metadata:
+      <h3>Generate Your RSA Key Pair</h3>
+      You need an RSA private key for encryption. Generate one if you don't have it:
       
-      ```go
-      ctx := context.Background()
-      content := "my coffee machine password is 8888"
+      ```bash
+      # Using OpenSSL
+      openssl genrsa -out private.pem 2048
+      ```
       
-      err := client.Add(ctx, memo.AddOpts{
-          Handle:      "testst-1",
-          Description: "Coffee machine credentials",
-          Content:     content,
-          Metadata: map[string]string{
-              "memory_id": "1",
-              "token_size": strconv.Itoa(len(content)),
-          },
-      })
+      Or use the Go SDK to generate one programmatically (see [Go SDK Integration](/integrations/go-sdk/)).
       
-      if err != nil {
-          log.Fatalf("Failed to save: %v", err)
+      <Aside type="caution">
+        **Critical**: Keep your private key secure! Never share it or commit it to version control. If you lose it, you cannot recover your encrypted data. The server only stores your public key and cannot decrypt your memories.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Configure Your MCP Client</h3>
+      Add the MCP server configuration to your AI assistant. The configuration location depends on your tool:
+      
+      <h4>For Cursor</h4>
+      Edit `~/.cursor/mcp.json` (or `%APPDATA%\Cursor\User\mcp.json` on Windows):
+      
+      ```json
+      {
+        "mcpServers": {
+          "yomemoai": {
+            "command": "uvx",
+            "args": ["yomemoai-mcp"],
+            "env": {
+              "MEMO_API_KEY": "your_api_key_here",
+              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_BASE_URL": "https://api.yomemo.ai"
+            }
+          }
+        }
       }
+      ```
       
-      fmt.Println("✅ Memory saved (encrypted and signed)")
+      <h4>For Claude Desktop</h4>
+      Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+      
+      ```json
+      {
+        "mcpServers": {
+          "yomemoai": {
+            "command": "uvx",
+            "args": ["yomemoai-mcp"],
+            "env": {
+              "MEMO_API_KEY": "your_api_key_here",
+              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_BASE_URL": "https://api.yomemo.ai"
+            }
+          }
+        }
+      }
       ```
       
       <Aside type="note">
-        The content is automatically encrypted using AES and signed with RSA before being sent to the server. The server only stores the encrypted content.
+        Replace `/absolute/path/to/private.pem` with the **absolute path** to your private key file. On Windows, use forward slashes (e.g., `C:/Users/YourName/private.pem`).
       </Aside>
     </li>
 
     <li>
-      <h3>Retrieve and Decrypt Memories</h3>
-      Query and decrypt your stored memories:
+      <h3>Restart Your AI Assistant</h3>
+      After saving the configuration, restart Cursor or Claude Desktop for the changes to take effect.
+    </li>
+
+    <li>
+      <h3>Start Using YoMemo</h3>
+      Once configured, you can use YoMemo in your AI assistant conversations:
       
-      ```go
-      memories, err := client.GetMemories(ctx, memo.QueryOptions{
-          PageSize:  10,
-          Cursor:    "",
-          Filters:   map[string]interface{}{"memory_id": "1"},
-          Ascending: true,
-      })
+      **Save a memory:**
+      ```
+      "Please remember that my coffee machine password is 8888, with handle 'passwords'"
+      ```
       
-      if err != nil {
-          log.Fatalf("Failed to get memories: %v", err)
-      }
+      **Retrieve memories:**
+      ```
+      "Can you recall my passwords?"
+      ```
       
-      for _, m := range memories {
-          fmt.Printf("ID: %s | Created: %v\n", m.ID, m.CreatedAt)
-          fmt.Printf("Content: %s\n", m.Content)
-          fmt.Println("-----------------------------------")
-      }
+      **Organize with handles:**
+      ```
+      "Remember this project detail with handle 'project-alpha'"
       ```
     </li>
   </ol>
 </Steps>
 
-## Complete Example
+## How It Works
 
-Here's a complete working example that demonstrates the full workflow:
+When you ask your AI assistant to save a memory:
 
-```go
-package main
+1. **Encryption**: The MCP server encrypts your content using your local private key (AES-GCM + RSA-OAEP)
+2. **Signing**: The encrypted data is signed for integrity verification
+3. **Storage**: Only the encrypted ciphertext is sent to the YoMemo server
+4. **Privacy**: The server cannot decrypt your data - it only stores encrypted content and your public key
 
-import (
-	"context"
-	"fmt"
-	"log"
-	"math/rand"
-	"os"
-	"strconv"
+When you ask your AI assistant to recall a memory:
 
-	"github.com/xxlv/memo-go-sdk"
-)
-
-func main() {
-	// Prepare environment
-	apiKey := "sk_3e0846df-ac5e-4786-b0b6-22b91bfadb6f"
-	serverURL := "http://127.0.0.1:8080"
-
-	// Read private key
-	privKeyPEM, err := os.ReadFile("private.pem")
-	if err != nil {
-		log.Fatal("Please generate private.pem file first")
-	}
-
-	// Initialize Memo Client
-	client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
-	if err != nil {
-		log.Fatalf("Failed to initialize client: %v", err)
-	}
-
-	// Save a memory
-	content := "my coffee machine password is 8888"
-	fmt.Println("Encrypting and uploading memory...")
-	
-	desc := fmt.Sprintf("This is a test description %d", rand.Intn(1000))
-	tokenSize := len(content)
-	ctx := context.Background()
-
-	err = client.Add(ctx, memo.AddOpts{
-		Handle:      "testst-1",
-		Description: desc,
-		Content:     content,
-		Metadata:    map[string]string{
-			"memory_id": "1",
-			"token_size": strconv.Itoa(tokenSize),
-		},
-	})
-	
-	if err != nil {
-		log.Fatalf("Failed to save: %v", err)
-	} else {
-		fmt.Println("✅ Memory saved to SaaS (server only holds encrypted content)")
-	}
-
-	// Get and decrypt memories
-	fmt.Println("Syncing and decrypting memory from cloud...")
-	memories, err := client.GetMemories(ctx, memo.QueryOptions{
-		PageSize:  10,
-		Cursor:    "",
-		Filters:   map[string]interface{}{"memory_id": "1"},
-		Ascending: true,
-	})
-	
-	if err != nil {
-		log.Fatalf("Failed to get memories: %v", err)
-	}
-
-	for _, m := range memories {
-		fmt.Printf("ID: %s | Time: %v\n", m.ID, m.CreatedAt)
-		fmt.Printf("Original content: %s\n", m.Content)
-		fmt.Println("-----------------------------------")
-	}
-}
-```
-
-## Security Features
+1. **Retrieval**: The MCP server fetches encrypted data from YoMemo
+2. **Decryption**: Your content is decrypted locally using your private key
+3. **Delivery**: The plaintext is returned to your AI assistant
 
 <Aside type="tip">
-  **End-to-End Encryption**: All content is encrypted client-side using AES before being sent to the server. The server never sees your plaintext data.
+  The entire encryption/decryption process happens on your local machine. The YoMemo server never sees your plaintext data.
 </Aside>
 
-- **Client-Side Encryption**: Content is encrypted using AES before upload
-- **RSA Signing**: All data is signed with your private key for authenticity
-- **Secure Storage**: Server only stores encrypted content
-- **Client-Side Decryption**: Content is decrypted locally when retrieved
+## Available MCP Tools
+
+### `save_memory`
+
+Store important information, user preferences, or conversation context.
+
+**Parameters:**
+- `content` (required): The information to be remembered
+- `handle` (optional): A category or tag (e.g., 'work', 'personal', 'project-x'). Defaults to 'general'
+- `description` (optional): A brief summary
+
+### `load_memories`
+
+Retrieve previously stored memories.
+
+**Parameters:**
+- `handle` (optional): Filter by category. If not specified, returns all memories
+
+## Other Integration Options
+
+While Python MCP is the easiest way to get started, YoMemo also supports other integration methods:
+
+- **[Go SDK](/integrations/go-sdk/)**: For programmatic access in Go applications
+- **[REST API](/api/reference)**: Direct HTTP API access for any language
+
+## Security Best Practices
+
+- ✅ **Keep your private key secure**: Store it with file permissions `600` (read/write for owner only)
+- ✅ **Never commit secrets**: Add `.env` files and private keys to `.gitignore`
+- ✅ **Use environment variables**: Store API keys in environment variables, not in code
+- ✅ **Backup your private key**: If you lose it, you cannot recover your encrypted data
+- ✅ **Use strong keys**: Generate 2048-bit or 4096-bit RSA keys
+
+## Troubleshooting
+
+### MCP Server Not Starting
+
+1. Verify your `MEMO_API_KEY` is correct
+2. Check that the private key path is absolute and the file exists
+3. Ensure the private key file has correct permissions (recommended: `600`)
+4. Test locally to see error messages:
+
+   ```bash
+   MEMO_API_KEY="your_api_key" \
+   MEMO_PRIVATE_KEY_PATH="/path/to/private.pem" \
+   uvx yomemoai-mcp
+   ```
+
+### Connection Issues
+
+- Verify `MEMO_BASE_URL` is correct (default: `https://api.yomemo.ai`)
+- Check your internet connection
+- Ensure your API key is valid
 
 ## Next Steps
 
-- Learn about [querying and filtering memories](/docs/reference/example)
-- Explore [advanced features](/docs/features/security)
-- Check out the [API reference](/docs/api/reference)
+- Learn more about [Python MCP Integration](/integrations/python-mcp/) for detailed configuration
+- Explore [How It Works](/guides/how-it-works/) to understand the encryption architecture
+- Check out [Go SDK Integration](/integrations/go-sdk/) for programmatic access
+- Read the [API Reference](/api/reference) for direct API access

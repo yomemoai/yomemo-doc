@@ -1,0 +1,232 @@
+---
+title: Python MCP Integration
+description: Integrate YoMemo as a Model Context Protocol (MCP) server for AI assistants like Claude, Cursor, and IDEs.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+YoMemo provides an out-of-the-box **MCP server** that enables AI assistants to save and retrieve encrypted memories. This is the easiest way to get started with YoMemo, especially if you're using Claude Desktop, Cursor, or other MCP-compatible tools.
+
+## Prerequisites
+
+Before you begin, you need:
+
+- Python 3.12 or higher
+- [`uv`](https://github.com/astral-sh/uv) package manager (recommended) or `pip`
+- A YoMemoAI API key
+- An RSA private key (PEM format)
+
+<Aside type="tip">
+  Don't have an API key yet? Sign up at [YoMemoAI](https://api.yomemo.ai) to get started.
+</Aside>
+
+## Quick Start
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Install the MCP Server</h3>
+      The easiest way is to use `uvx` to run it directly without installation:
+      
+      ```bash
+      uvx yomemoai-mcp --help
+      ```
+      
+      Or install via `pip`:
+      
+      ```bash
+      pip install yomemoai-mcp
+      ```
+    </li>
+
+    <li>
+      <h3>Generate Your RSA Key Pair</h3>
+      If you don't have an RSA key pair yet, generate one:
+      
+      ```bash
+      # Using OpenSSL
+      openssl genrsa -out private.pem 2048
+      ```
+      
+      <Aside type="caution">
+        Keep your private key secure! Never share it or commit it to version control. If you lose it, you cannot recover your encrypted data.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Configure Your MCP Client</h3>
+      Add the MCP server configuration to your client. The configuration location depends on your tool:
+      
+      <h4>For Cursor</h4>
+      Edit `~/.cursor/mcp.json` (or `%APPDATA%\Cursor\User\mcp.json` on Windows):
+      
+      ```json
+      {
+        "mcpServers": {
+          "yomemoai": {
+            "command": "uvx",
+            "args": ["yomemoai-mcp"],
+            "env": {
+              "MEMO_API_KEY": "your_api_key_here",
+              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_BASE_URL": "https://api.yomemo.ai"
+            }
+          }
+        }
+      }
+      ```
+      
+      <h4>For Claude Desktop</h4>
+      Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+      
+      ```json
+      {
+        "mcpServers": {
+          "yomemoai": {
+            "command": "uvx",
+            "args": ["yomemoai-mcp"],
+            "env": {
+              "MEMO_API_KEY": "your_api_key_here",
+              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_BASE_URL": "https://api.yomemo.ai"
+            }
+          }
+        }
+      }
+      ```
+      
+      <Aside type="note">
+        Replace `/absolute/path/to/private.pem` with the **absolute path** to your private key file. Use forward slashes even on Windows (e.g., `C:/Users/YourName/private.pem`).
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Restart Your MCP Client</h3>
+      After saving the configuration, restart Cursor or Claude Desktop for the changes to take effect.
+    </li>
+
+    <li>
+      <h3>Start Using YoMemo</h3>
+      Once configured, you can use YoMemo in your AI assistant conversations:
+      
+      - **Save memories**: Ask your AI assistant to remember important information
+      - **Retrieve memories**: Ask your AI assistant to recall previously saved information
+      - **Organize with handles**: Use categories like "work", "personal", "project-x" to organize memories
+    </li>
+  </ol>
+</Steps>
+
+## Available MCP Tools
+
+### `save_memory`
+
+Store important information, user preferences, or conversation context as a permanent encrypted memory.
+
+**Parameters:**
+- `content` (required): The actual text/information to be remembered
+- `handle` (optional): A category or tag (e.g., 'work', 'personal', 'project-x'). Defaults to 'general'
+- `description` (optional): A brief summary of what this memory is about
+
+**Example usage in Claude/Cursor:**
+```
+"Please remember that my coffee machine password is 8888, with handle 'passwords'"
+```
+
+### `load_memories`
+
+Retrieve previously stored memories or context.
+
+**Parameters:**
+- `handle` (optional): Filter memories by category. If not specified, returns all memories
+
+**Example usage in Claude/Cursor:**
+```
+"Can you recall my passwords?"
+```
+
+## Configuration Options
+
+### Environment Variables
+
+You can configure the MCP server using environment variables:
+
+- **`MEMO_API_KEY`** (required): Your YoMemoAI API key for authentication
+- **`MEMO_PRIVATE_KEY_PATH`** (required): Absolute path to your RSA private key PEM file
+- **`MEMO_BASE_URL`** (optional): Base URL of the YoMemoAI API. Defaults to `https://api.yomemo.ai`
+
+### Using `.env` File (Local Development)
+
+For local development, you can also use a `.env` file in your project directory:
+
+```bash
+# .env
+MEMO_API_KEY=your_api_key_here
+MEMO_PRIVATE_KEY_PATH=./private.pem
+MEMO_BASE_URL=https://api.yomemo.ai
+```
+
+Then run:
+
+```bash
+uv run memo-mcp
+```
+
+<Aside type="caution">
+  Never commit your `.env` file or private key files to version control. They are already included in `.gitignore`.
+</Aside>
+
+## How It Works
+
+The MCP integration works as a bridge between your AI assistant and the YoMemo backend:
+
+1. **On Write**: When you ask your AI to save a memory:
+   - The MCP server encrypts the content using your local private key (AES-GCM + RSA-OAEP)
+   - Signs the encrypted data for integrity verification
+   - Sends the encrypted data to the YoMemo API
+   - The server only stores encrypted ciphertext and cannot see your plaintext
+
+2. **On Read**: When you ask your AI to recall a memory:
+   - The MCP server fetches encrypted data from YoMemo API
+   - Decrypts it locally using your private key
+   - Returns the plaintext to your AI assistant
+
+Throughout the entire process, the YoMemo server only handles encrypted ciphertext and public keys, ensuring your data remains private.
+
+## Troubleshooting
+
+### MCP Server Not Starting
+
+If the MCP server fails to start:
+
+1. **Check API Key**: Verify your `MEMO_API_KEY` is correct
+2. **Check Private Key Path**: Ensure the path is absolute and the file exists
+3. **Check Permissions**: Make sure the private key file is readable (permissions `600` recommended)
+4. **Test Locally**: Run the server directly to see error messages:
+
+   ```bash
+   MEMO_API_KEY="your_api_key" \
+   MEMO_PRIVATE_KEY_PATH="/path/to/private.pem" \
+   uvx yomemoai-mcp
+   ```
+
+### Connection Issues
+
+If you can't connect to the YoMemo API:
+
+- Verify `MEMO_BASE_URL` is correct (default: `https://api.yomemo.ai`)
+- Check your internet connection
+- Ensure your API key is valid and not expired
+
+### Decryption Errors
+
+If you see decryption errors:
+
+- Verify you're using the correct private key (the one that matches the public key stored on the server)
+- Check that the private key file is not corrupted
+- Ensure the private key format is correct (PEM format)
+
+## Next Steps
+
+- Learn about [Go SDK integration](/docs/integrations/go-sdk/) for programmatic access
+- Explore [How It Works](/docs/guides/how-it-works/) to understand the encryption architecture
+- Check out the [API reference](/docs/api/reference) for direct API access

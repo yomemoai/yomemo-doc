@@ -1,1 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+<svg width="120" height="120" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heroMemoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+    <linearGradient id="heroLockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle with gradient -->
+  <circle cx="32" cy="32" r="30" fill="url(#heroMemoGradient)" />
+  <!-- Lock body - representing secure memory -->
+  <rect x="20" y="28" width="24" height="20" rx="2" fill="url(#heroLockGradient)" opacity="0.95" />
+  <!-- Lock shackle -->
+  <path
+    d="M 24 28 Q 24 20, 32 20 Q 40 20, 40 28"
+    fill="none"
+    stroke="url(#heroLockGradient)"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Memory dots - representing stored memories -->
+  <circle cx="28" cy="36" r="1.5" fill="#06B6D4" opacity="0.8" />
+  <circle cx="32" cy="36" r="1.5" fill="#06B6D4" opacity="0.8" />
+  <circle cx="36" cy="36" r="1.5" fill="#06B6D4" opacity="0.8" />
+  <circle cx="28" cy="42" r="1.5" fill="#3B82F6" opacity="0.8" />
+  <circle cx="32" cy="42" r="1.5" fill="#3B82F6" opacity="0.8" />
+  <circle cx="36" cy="42" r="1.5" fill="#3B82F6" opacity="0.8" />
+</svg>

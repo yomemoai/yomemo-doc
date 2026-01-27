@@ -1,0 +1,297 @@
+---
+title: Go SDK Integration
+description: Integrate YoMemo into your Go applications with the official Go SDK for programmatic access.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+The YoMemo Go SDK provides a type-safe, idiomatic Go interface for integrating encrypted memory storage into your applications. All content is encrypted client-side using AES-GCM and signed with RSA before being sent to the server.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- Go 1.24.1 or later installed
+- A YoMemoAI API key
+- An RSA private key (or generate one using the SDK)
+
+## Installation
+
+Install the SDK using Go modules:
+
+```bash
+go get github.com/yomemoai/yomemo-go-sdk
+```
+
+## Quick Start
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Generate Your RSA Key Pair</h3>
+      If you don't have an RSA key pair, generate one using the SDK:
+      
+      ```go
+      package main
+      
+      import (
+          "fmt"
+          "os"
+          "github.com/yomemoai/yomemo-go-sdk"
+      )
+      
+      func main() {
+          // Generate 2048-bit RSA key pair
+          privKey, _, err := memo.GenerateKeyPair(2048)
+          if err != nil {
+              panic(err)
+          }
+          
+          // Convert to PEM format
+          pemStr, err := memo.PrivateKeyToPEM(privKey)
+          if err != nil {
+              panic(err)
+          }
+          
+          // Save to file (with secure permissions)
+          os.WriteFile("private.pem", []byte(pemStr), 0600)
+          fmt.Println("Key pair generated and saved to private.pem")
+      }
+      ```
+      
+      <Aside type="caution">
+        Keep your private key secure! Never share it or commit it to version control. The private key is used to decrypt your memories.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Initialize the Client</h3>
+      Create a client instance with your API key, private key, and server URL:
+      
+      ```go
+      package main
+      
+      import (
+          "context"
+          "log"
+          "os"
+          "github.com/yomemoai/yomemo-go-sdk"
+      )
+      
+      func main() {
+          apiKey := "your_api_key_here"
+          serverURL := "https://api.yomemo.ai"
+          
+          // Read your private key from file
+          privKeyPEM, err := os.ReadFile("private.pem")
+          if err != nil {
+              log.Fatal("Please generate private.pem file first")
+          }
+          
+          // Initialize Memo Client
+          client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
+          if err != nil {
+              log.Fatalf("Failed to initialize client: %v", err)
+          }
+          
+          fmt.Println("Client initialized successfully!")
+      }
+      ```
+    </li>
+
+    <li>
+      <h3>Save a Memory</h3>
+      Store encrypted memories with optional metadata:
+      
+      ```go
+      ctx := context.Background()
+      
+      err := client.Add(ctx, memo.AddOpts{
+          Content:     "My coffee machine password is 8888",
+          Handle:      "passwords",
+          Description: "Coffee machine credentials",
+          Metadata: map[string]string{
+              "category": "credentials",
+              "importance": "high",
+          },
+      })
+      
+      if err != nil {
+          log.Fatalf("Failed to save: %v", err)
+      }
+      
+      fmt.Println("✅ Memory saved (encrypted and signed)")
+      ```
+      
+      <Aside type="note">
+        The content is automatically encrypted using AES-GCM and signed with RSA before being sent to the server. The server only stores the encrypted content.
+      </Aside>
+    </li>
+
+    <li>
+      <h3>Retrieve and Decrypt Memories</h3>
+      Query and decrypt your stored memories:
+      
+      ```go
+      memories, err := client.GetMemories(ctx, memo.QueryOptions{
+          PageSize:  10,
+          Filters:   map[string]interface{}{"category": "credentials"},
+          Ascending: true,
+      })
+      
+      if err != nil {
+          log.Fatalf("Failed to get memories: %v", err)
+      }
+      
+      for _, m := range memories {
+          fmt.Printf("ID: %s | Created: %v\n", m.ID, m.CreatedAt)
+          fmt.Printf("Content: %s\n", m.Content) // Automatically decrypted
+          fmt.Println("-----------------------------------")
+      }
+      ```
+    </li>
+  </ol>
+</Steps>
+
+## API Reference
+
+### Client Methods
+
+#### `NewClient(apiKey string, privKeyPEM []byte, baseURL string) (*Client, error)`
+
+Creates a new YoMemo client instance.
+
+**Parameters:**
+- `apiKey`: Your YoMemoAI API key
+- `privKeyPEM`: RSA private key in PEM format (PKCS#8 or PKCS#1)
+- `baseURL`: Base URL of the YoMemoAI API (e.g., `https://api.yomemo.ai`)
+
+#### `Add(ctx context.Context, opts AddOpts) error`
+
+Adds a new encrypted memory to the server.
+
+**Parameters:**
+- `opts`: `AddOpts` struct containing:
+  - `Content` (required): The content to encrypt and store
+  - `Handle`: Optional handle/tag for categorization
+  - `Description`: Optional description
+  - `Metadata`: Optional key-value metadata map
+
+#### `GetMemories(ctx context.Context, options QueryOptions) ([]Memory, error)`
+
+Retrieves memories with optional filtering and pagination. Content is automatically decrypted.
+
+**QueryOptions:**
+- `PageSize`: Number of results per page
+- `Cursor`: Pagination cursor (from previous response)
+- `StartTime`: Unix timestamp for start time filter
+- `EndTime`: Unix timestamp for end time filter
+- `Filters`: Map of metadata filters
+- `Ascending`: Sort order (true = ascending, false = descending)
+
+#### `GetMemoriesByHandle(ctx context.Context, handle string, options QueryOptions) ([]Memory, error)`
+
+Retrieves memories filtered by a specific handle. Content is automatically decrypted.
+
+#### `DeleteMemories(ctx context.Context, memoIDs []string) error`
+
+Deletes memories by their IDs.
+
+#### `DeleteMemoriesByHandle(ctx context.Context, handle string) error`
+
+Deletes all memories with a specific handle.
+
+## Complete Example
+
+Here's a complete working example:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"github.com/yomemoai/yomemo-go-sdk"
+)
+
+func main() {
+	apiKey := "your_api_key_here"
+	serverURL := "https://api.yomemo.ai"
+
+	// Read private key
+	privKeyPEM, err := os.ReadFile("private.pem")
+	if err != nil {
+		log.Fatal("Please generate private.pem file first")
+	}
+
+	// Initialize client
+	client, err := memo.NewClient(apiKey, privKeyPEM, serverURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Save a memory
+	err = client.Add(ctx, memo.AddOpts{
+		Content:     "My coffee machine password is 8888",
+		Handle:      "passwords",
+		Description: "Coffee machine credentials",
+		Metadata: map[string]string{
+			"category": "credentials",
+		},
+	})
+	if err != nil {
+		log.Fatalf("Failed to save: %v", err)
+	}
+	fmt.Println("✅ Memory saved")
+
+	// Retrieve memories
+	memories, err := client.GetMemories(ctx, memo.QueryOptions{
+		PageSize: 10,
+	})
+	if err != nil {
+		log.Fatalf("Failed to get memories: %v", err)
+	}
+
+	for _, m := range memories {
+		fmt.Printf("ID: %s | Content: %s\n", m.ID, m.Content)
+	}
+}
+```
+
+## Security Features
+
+- **Client-Side Encryption**: Content is encrypted using AES-GCM before upload
+- **RSA Key Wrapping**: AES keys are encrypted with RSA-OAEP
+- **RSA Signing**: All data is signed with your private key for authenticity
+- **Secure Storage**: Server only stores encrypted content
+- **Client-Side Decryption**: Content is decrypted locally when retrieved
+
+## Error Handling
+
+All methods return errors that should be checked:
+
+```go
+memories, err := client.GetMemories(ctx, memo.QueryOptions{})
+if err != nil {
+    // Handle error (network, decryption, API errors, etc.)
+    log.Printf("Error: %v", err)
+    return
+}
+```
+
+Common error scenarios:
+- Network connectivity issues
+- Invalid API key
+- Invalid or corrupted private key
+- Decryption failures (wrong key, corrupted data)
+- API rate limiting or server errors
+
+## Next Steps
+
+- Learn about [Python MCP integration](/docs/integrations/python-mcp/) for AI assistant integration
+- Explore [How It Works](/docs/guides/how-it-works/) to understand the encryption architecture
+- Check out the [API reference](/docs/api/reference) for direct API access

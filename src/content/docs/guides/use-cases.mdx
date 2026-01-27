@@ -1,0 +1,124 @@
+---
+title: Use Cases
+description: Discover how YoMemo's end-to-end encrypted memory secures your AI workflows and protects user privacy.
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+YoMemo provides a **Zero-Knowledge** memory layer for AI applications. By utilizing **End-to-End Encryption (E2EE)**, every piece of data is encrypted locally with the user's private key before it ever reaches our servers. Even we cannot read your memories.
+
+## Why Secure Memory Matters
+
+| Feature | Standard Vector DBs | YoMemo (E2EE) |
+| :--- | :--- | :--- |
+| **Data Visibility** | Service providers can access plaintext | **Only you hold the decryption key** |
+| **Training Risk** | Data may be used for model training | **Mathematically impossible to leak to LLMs** |
+| **Security** | Vulnerable to server-side breaches | **Zero-Knowledge architecture** |
+
+---
+
+## 1. Privacy-First AI Personalization
+Empower AI assistants with deep personal context without compromising user privacy. Since data is decrypted only on the client side, users can store sensitive habits and preferences securely.
+
+<CardGrid>
+  <Card title="Sovereign User Profiles" icon="setting">
+    Store work styles, communication tones, and personal routines. 
+    
+    **Examples:**
+    - Internal coding standards and private library references.
+    - Sensitive daily schedules and productivity peaks.
+  </Card>
+  
+  <Card title="Cross-Session Privacy" icon="puzzle">
+    Maintain context across different platforms. Your "Memory" follows you, but remains invisible to the infrastructure providers.
+  </Card>
+</CardGrid>
+
+### Example: Remembering Preferences Securely
+```typescript
+// Data is encrypted on the client before being sent to YoMemo
+await yoMemo.save({
+  content: "I use a custom internal framework 'X-Lib' for all my React components.",
+  handle: "dev-preferences",
+  tags: ["private", "coding"]
+});
+
+```
+
+---
+
+## 2. Secure Credential & Secret Storage
+
+YoMemo acts as a secure vault for secrets that your AI agents need to perform tasks.
+
+<CardGrid>
+<Card title="Encrypted Secret Management" icon="forward-slash">
+Store API keys, database strings, and SSH credentials. AI agents can access these only within your trusted execution environment.
+</Card>
+
+<Card title="Zero-Trust Access" icon="key">
+Provide AI with the keys to your development environment without ever exposing them in plaintext on the cloud.
+</Card>
+</CardGrid>
+
+<Aside type="danger" title="Privacy Guarantee">
+YoMemo uses AES-256-GCM encryption. Your private key never leaves your device. If you lose your key, even we cannot recover your data.
+</Aside>
+
+---
+
+## 3. Confidential Project Context
+
+Keep your intellectual property safe. Store project architectures and business logic that you don't want leaked into public LLM training sets.
+
+<CardGrid>
+<Card title="IP Protection" icon="rocket">
+Store proprietary algorithms, unreleased product roadmaps, and internal system designs.
+</Card>
+
+<Card title="Team Knowledge Vault" icon="puzzle">
+Share encrypted project memories across a team where only authorized members hold the decryption keys.
+</Card>
+</CardGrid>
+
+### Example: Storing Proprietary Logic (Go)
+
+```go
+// Using Go SDK - Encryption happens in the background
+err := client.Add(ctx, memo.AddOpts{
+    Content:     "Our core valuation logic uses the formula: [Proprietary Formula]",
+    Handle:      "core-ip",
+    Description: "Confidential Business Logic",
+    Metadata: map[string]string{
+        "classification": "highly-confidential",
+    },
+})
+
+```
+
+---
+
+## 4. Personal "Zero-Knowledge" Second Brain
+
+Build a knowledge base of your most private thoughts, research, and learning notes.
+
+* **Unpublished Research:** Store hypotheses and data findings securely.
+* **Private Journaling:** Use AI to reflect on personal growth with total privacy.
+* **Sensitive Templates:** Store custom prompts that contain sensitive business logic.
+
+---
+
+## Long-Term Secure Conversation Memory
+
+Enable AI assistants to remember important information across months or years, protected by hardware-level security.
+
+**Scenario: Secure Long-term Collaboration**
+
+```text
+User: "Remember the server architecture we discussed for the 'Phoenix' project."
+
+AI: [Retrieves encrypted memo 'phoenix-arch' -> Decrypts locally]
+AI: "Yes, Project Phoenix uses a sharded PostgreSQL cluster with a custom 
+    Go-based middleware. Would you like to review the migration steps?"
+
+```

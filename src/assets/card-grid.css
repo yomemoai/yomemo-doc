@@ -13,3 +13,54 @@
 	display: flex;
 	flex-direction: column;
 }
+
+/* Custom YoMemo title styling with color distinction */
+.site-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	text-decoration: none;
+	color: inherit;
+	cursor: pointer;
+}
+
+.site-title:hover {
+	text-decoration: none;
+	opacity: 0.9;
+}
+
+/* Hide the original text and replace with styled version */
+.site-title > span[translate="no"] {
+	display: inline-flex;
+	align-items: center;
+	gap: 0;
+	font-size: 0; /* Hide original text */
+}
+
+.site-title > span[translate="no"]::before {
+	content: "Yo";
+	color: var(--sl-color-white);
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	font-size: 1rem; /* Restore font size */
+}
+
+.site-title > span[translate="no"]::after {
+	content: "Memo";
+	background: linear-gradient(90deg, #22d3ee, #3b82f6); /* from-cyan-400 to-blue-500 */
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	margin-left: 0.08em;
+	font-size: 1rem; /* Restore font size */
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: light) {
+	.site-title > span[translate="no"]::before {
+		color: var(--sl-color-gray-900);
+	}
+}
+

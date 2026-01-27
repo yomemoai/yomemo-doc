@@ -1,23 +1,23 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="faviconMemoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="docMemoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#06B6D4" />
       <stop offset="100%" stop-color="#3B82F6" />
     </linearGradient>
-    <linearGradient id="faviconLockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="docLockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FFFFFF" />
       <stop offset="100%" stop-color="#E0F2FE" />
     </linearGradient>
   </defs>
   <!-- Background circle with gradient -->
-  <circle cx="32" cy="32" r="30" fill="url(#faviconMemoGradient)" />
+  <circle cx="32" cy="32" r="30" fill="url(#docMemoGradient)" />
   <!-- Lock body - representing secure memory -->
-  <rect x="20" y="28" width="24" height="20" rx="2" fill="url(#faviconLockGradient)" opacity="0.95" />
+  <rect x="20" y="28" width="24" height="20" rx="2" fill="url(#docLockGradient)" opacity="0.95" />
   <!-- Lock shackle -->
   <path
     d="M 24 28 Q 24 20, 32 20 Q 40 20, 40 28"
     fill="none"
-    stroke="url(#faviconLockGradient)"
+    stroke="url(#docLockGradient)"
     stroke-width="3"
     stroke-linecap="round"
     stroke-linejoin="round"
