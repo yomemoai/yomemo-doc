@@ -1,0 +1,136 @@
+---
+title: OpenClaw Plugin
+description: Use YoMemo as agent tools inside OpenClaw — encrypted memory on WhatsApp, Telegram, Slack, Discord, and more.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+YoMemo integrates with [OpenClaw](https://github.com/openclaw/openclaw) via a plugin that exposes encrypted memory as agent tools (`memo_save_memory`, `memo_load_memories`). Once installed, your OpenClaw assistant can save and recall YoMemo memories on any connected channel (WhatsApp, Telegram, Slack, Discord, and more). The plugin uses the same encryption as the [Python MCP](/docs/integrations/python-mcp/) server.
+
+## Prerequisites
+
+Before you begin:
+
+- [OpenClaw](https://docs.openclaw.ai/) installed with the Gateway configured (Node ≥22)
+- A YoMemo API key
+- An RSA private key (PEM); you can use the same key pair as the Python MCP
+
+<Aside type="tip">
+  If you already use the Python MCP server, you can reuse the same API key and private key for this plugin.
+</Aside>
+
+## Quick Start
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Clone the plugin and install dependencies</h3>
+
+      ```bash
+      git clone https://github.com/yomemoai/yomemo-openclaw-plugin.git
+      cd yomemo-openclaw-plugin
+      npm install
+      ```
+    </li>
+
+    <li>
+      <h3>Install the plugin into OpenClaw</h3>
+      Use link mode so the plugin runs from your clone (no copy):
+
+      ```bash
+      openclaw plugins install -l "$(pwd)"
+      ```
+    </li>
+
+    <li>
+      <h3>Configure the plugin</h3>
+      Edit <code>~/.openclaw/openclaw.json</code> and add <code>plugins.entries.yomemo</code> with your API key, private key path, and base URL:
+
+      ```json5
+      {
+        "plugins": {
+          "entries": {
+            "yomemo": {
+              "enabled": true,
+              "config": {
+                "apiKey": "your_YoMemo_API_KEY",
+                "privateKeyPath": "/absolute/path/to/private.pem",
+                "baseUrl": "https://api.yomemo.ai"
+              }
+            }
+          }
+        }
+      }
+      ```
+
+      Then restart the gateway:
+
+      ```bash
+      openclaw gateway restart
+      openclaw plugins list
+      ```
+
+      You should see <code>yomemo</code> listed and loaded.
+    </li>
+
+    <li>
+      <h3>Allow tools for your agent</h3>
+      Add the YoMemo tools to your main agent’s allowlist:
+
+      ```json5
+      {
+        "agents": {
+          "list": [
+            {
+              "id": "main",
+              "tools": {
+                "allow": [
+                  "memo_save_memory",
+                  "memo_load_memories",
+                  "group:plugins"
+                ]
+              }
+            }
+          ]
+        }
+      }
+      ```
+    </li>
+
+    <li>
+      <h3>Use YoMemo from OpenClaw</h3>
+      Once configured, your OpenClaw assistant can call:
+
+      - <code>memo_save_memory</code> — encrypt and store content in YoMemo (parameters: <code>content</code> required, <code>handle</code>, <code>description</code> optional)
+      - <code>memo_load_memories</code> — load memories by <code>handle</code> (optional; omit to load all) and return decrypted content
+
+      Use them from any connected channel (WhatsApp, Telegram, Slack, Discord, WebChat, etc.).
+    </li>
+  </ol>
+</Steps>
+
+## Install from a Release zip
+
+If you prefer not to clone the repo:
+
+1. Go to [Releases](https://github.com/yomemoai/yomemo-openclaw-plugin/releases) and download the latest <code>yomemo-openclaw-plugin.zip</code>.
+2. Run:
+
+   ```bash
+   openclaw plugins install /path/to/yomemo-openclaw-plugin.zip
+   ```
+
+3. Add <code>plugins.entries.yomemo</code> with your <code>apiKey</code>, <code>privateKeyPath</code>, and <code>baseUrl</code>, then restart the gateway.
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| **memo_save_memory** | Encrypt and store content in YoMemo. Parameters: <code>content</code> (required), <code>handle</code>, <code>description</code> (optional). |
+| **memo_load_memories** | Load memories by <code>handle</code> (optional; omit to load all) and return decrypted content. |
+
+## Next Steps
+
+- [OpenClaw documentation](https://docs.openclaw.ai/) — gateway, channels, and CLI
+- [YoMemo OpenClaw plugin on GitHub](https://github.com/yomemoai/yomemo-openclaw-plugin) — source and releases
+- [Python MCP integration](/docs/integrations/python-mcp/) — same encryption, different integration path
