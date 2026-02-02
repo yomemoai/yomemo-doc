@@ -22,14 +22,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: yomemo-doc/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: ./yomemo-doc
         run: npm ci
 
       - name: Build
-        working-directory: ./yomemo-doc
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
@@ -38,5 +36,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: yomemo-doc
-          directory: yomemo-doc/dist
+          directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
