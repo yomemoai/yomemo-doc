@@ -1,16 +1,10 @@
-# Starlight Starter Kit: Basics
+# YoMemo Docs
 
 [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
-```
-npm create astro@latest -- --template starlight
-```
+Documentation site for [YoMemo](https://yomemo.ai), built with Astro + Starlight.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+## Project Structure
 
 ```
 .
@@ -25,95 +19,95 @@ Inside of your Astro + Starlight project, you'll see the following folders and f
 └── tsconfig.json
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Starlight serves `.md` and `.mdx` files from `src/content/docs/`. Each file is exposed as a route based on its file name.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+Images go in `src/assets/` and can be embedded in Markdown. Static assets (e.g. favicons) go in `public/`.
 
-Static assets, like favicons, can be placed in the `public/` directory.
+## Commands
 
-## 🧞 Commands
+| Command                   | Action                                          |
+| :------------------------ | :---------------------------------------------- |
+| `npm install`             | Install dependencies                            |
+| `npm run dev`             | Start local dev server at `localhost:4321`      |
+| `npm run build`           | Build production site to `./dist/`              |
+| `npm run preview`         | Preview the build locally                       |
+| `npm run deploy`          | Build and deploy to Cloudflare Pages            |
+| `npm run astro ...`       | Run Astro CLI (e.g. `astro add`, `astro check`) |
+| `npm run astro -- --help` | Astro CLI help                                  |
 
-All commands are run from the root of the project, from a terminal:
+## Deployment
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+This project deploys to **Cloudflare Pages**.
 
-## 🚀 Deployment
+### Option 1: Cloudflare Dashboard (recommended)
 
-This project is configured to deploy to Cloudflare Pages. See the deployment section below for instructions.
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Workers & Pages → Create application → Pages → **Connect to Git**
+3. Select this repository
+4. Build settings:
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Deploy command**: **Leave empty** (Cloudflare Pages runs the build automatically)
+5. Save and Deploy
+6. In project settings, add custom domain `docs.yomemo.ai`
 
-### Quick Deploy to Cloudflare Pages
+**Important:** If the deploy fails, check Settings → Builds & deployments → Deploy command and ensure it is empty.
 
-1. **Via Cloudflare Dashboard** (Recommended):
-   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
-   - Workers & Pages → Create application → Pages → Connect to Git
-   - Select your repository
-   - Build settings:
-     - Build command: `npm run build`
-     - Build output directory: `dist`
-     - **Deploy command**: **留空**（不要设置任何值，Cloudflare Pages 会自动部署）
-   - Save and Deploy
-   - After deployment, add custom domain `docs.yomemo.ai` in project settings
-   
-   **重要**: 如果遇到部署错误，请检查 Settings → Builds & deployments → Deploy command 是否为空
+### Option 2: Wrangler CLI
 
-2. **Via Wrangler CLI**:
-   
-   **重要**: 首次部署前，需要先创建 Cloudflare Pages 项目：
-   ```bash
-   # 1. 确保已安装并登录 Wrangler
-   npm install -g wrangler
-   wrangler login
-   
-   # 2. 创建 Pages 项目（仅首次需要）
-   npm run pages:create
-   # 或者直接运行：
-   # wrangler pages project create yomemo-doc --production-branch=main
-   
-   # 3. 构建并部署
-   npm run deploy
-   # 或者分步执行：
-   # npm run build
-   # wrangler pages deploy dist --project-name=yomemo-doc
-   ```
-   Then add custom domain `docs.yomemo.ai` in Cloudflare Pages settings
-   
-   **注意**: 如果遇到 "Project not found" 错误，说明项目还未创建，请先执行步骤 2。
+**Important:** Create the Cloudflare Pages project first (one-time):
 
-3. **Via GitHub Actions** (自动部署，推荐用于 CI/CD):
-   
-   已配置 GitHub Actions 工作流，每次推送到 `main` 分支会自动部署。
-   
-   **设置步骤**:
-   1. 获取 Cloudflare API Token:
-      - 访问 [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-      - 点击 "Create Token" → 使用 "Edit Cloudflare Workers" 模板
-      - 或者创建自定义 token，需要以下权限：
-        - Account: Cloudflare Pages:Edit
-        - Zone: Zone:Read (如果需要自定义域名)
-   2. 获取 Account ID:
-      - 在 Cloudflare Dashboard 右侧边栏可以看到 Account ID
-   3. 配置 GitHub Secrets:
-      - 进入 GitHub 仓库 → Settings → Secrets and variables → Actions
-      - 添加以下 Secrets:
-        - `CLOUDFLARE_API_TOKEN`: 你的 Cloudflare API Token
-        - `CLOUDFLARE_ACCOUNT_ID`: 你的 Cloudflare Account ID
-   4. 推送代码到 `main` 分支，GitHub Actions 会自动触发部署
-   
-   **工作流文件**: `.github/workflows/deploy.yml`
-   
-   **注意**: 
-   - 首次部署前，需要先在 Cloudflare Pages 创建项目 `yomemo-doc`
-   - 可以通过 Dashboard 或运行 `wrangler pages project create yomemo-doc` 创建
+```bash
+# 1. Install dependencies and log in (wrangler is a devDependency)
+npm install
+npx wrangler login
 
-For more details, see the [Cloudflare Pages documentation](https://developers.cloudflare.com/pages/).
+# 2. Create the Pages project (one-time only)
+npm run pages:create
+# or: npx wrangler pages project create yomemo-doc --production-branch=main
 
-## 👀 Want to learn more?
+# 3. Build and deploy
+npm run deploy
+# or step by step:
+# npm run build
+# npx wrangler pages deploy dist --project-name=yomemo-doc
+```
 
-Check out [Starlight's docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+Then add custom domain `docs.yomemo.ai` in Cloudflare Pages project settings.
+
+**Note:** If you see "Project not found", create the project first (step 2).
+
+### Option 3: GitHub Actions (CI/CD)
+
+A GitHub Actions workflow is set up to deploy on every push to `main`.
+
+**Setup:**
+
+1. **Cloudflare API Token**
+   - Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+   - Create Token → use "Edit Cloudflare Workers" template, or create a custom token with:
+     - Account: Cloudflare Pages: Edit
+     - Zone: Zone: Read (if using a custom domain)
+2. **Account ID**
+   - Find it in the right sidebar of the Cloudflare Dashboard
+3. **GitHub Secrets**
+   - Repo → Settings → Secrets and variables → Actions
+   - Add:
+     - `CLOUDFLARE_API_TOKEN`: your Cloudflare API token
+     - `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID
+4. Push to `main`; the workflow will run and deploy.
+
+Workflow file: `.github/workflows/deploy.yml`
+
+**Note:** The first deploy requires the Pages project `yomemo-doc` to exist. Create it via the Dashboard or:
+
+```bash
+npx wrangler pages project create yomemo-doc --production-branch=main
+```
+
+For more, see [Cloudflare Pages docs](https://developers.cloudflare.com/pages/).
+
+## Learn more
+
+- [Starlight](https://starlight.astro.build/)
+- [Astro](https://docs.astro.build)
