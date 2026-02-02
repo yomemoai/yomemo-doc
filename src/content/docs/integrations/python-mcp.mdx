@@ -120,12 +120,13 @@ Before you begin, you need:
 
 ### `save_memory`
 
-Store important information, user preferences, or conversation context as a permanent encrypted memory.
+Store important information, user preferences, or conversation context as a permanent encrypted memory. When you use the same `idempotent_key` with the same `handle`, the existing memory is updated (upsert) instead of creating a duplicate.
 
 **Parameters:**
 - `content` (required): The actual text/information to be remembered
 - `handle` (optional): A category or tag (e.g., 'work', 'personal', 'project-x'). Defaults to 'general'
 - `description` (optional): A brief summary of what this memory is about
+- `idempotent_key` (optional): A stable key for upsert. If a memory with the same (handle, idempotent_key) already exists, it is updated; otherwise a new one is created. Use for project progress, habit tracking, or avoiding duplicate memories.
 
 **Example usage in Claude/Cursor:**
 ```

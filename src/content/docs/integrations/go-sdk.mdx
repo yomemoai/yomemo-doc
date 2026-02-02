@@ -101,15 +101,16 @@ go get github.com/yomemoai/yomemo-go-sdk
 
     <li>
       <h3>Save a Memory</h3>
-      Store encrypted memories with optional metadata:
+      Store encrypted memories with optional metadata. Use <code>IdempotentKey</code> for upsert: if the same (handle, idempotent_key) exists, the memory is updated instead of creating a new one.
       
       ```go
       ctx := context.Background()
       
-      err := client.Add(ctx, memo.AddOpts{
-          Content:     "My coffee machine password is 8888",
-          Handle:      "passwords",
-          Description: "Coffee machine credentials",
+      resp, err := client.Add(ctx, memo.AddOpts{
+          Content:       "My coffee machine password is 8888",
+          Handle:       "passwords",
+          Description:  "Coffee machine credentials",
+          IdempotentKey: "coffee-creds", // optional: for upsert
           Metadata: map[string]string{
               "category": "credentials",
               "importance": "high",
@@ -120,11 +121,11 @@ go get github.com/yomemoai/yomemo-go-sdk
           log.Fatalf("Failed to save: %v", err)
       }
       
-      fmt.Println("✅ Memory saved (encrypted and signed)")
+      fmt.Printf("✅ Memory %s (%s)\n", resp.Action, resp.MemoryID)
       ```
       
       <Aside type="note">
-        The content is automatically encrypted using AES-GCM and signed with RSA before being sent to the server. The server only stores the encrypted content.
+        The content is automatically encrypted using AES-GCM and signed with RSA before being sent to the server. The server only stores the encrypted content. <code>Add</code> returns <code>MemoryResponse</code> with <code>MemoryID</code>, <code>Action</code> (created/updated), and <code>IdempotentKey</code>.
       </Aside>
     </li>
 
@@ -166,15 +167,16 @@ Creates a new YoMemo client instance.
 - `privKeyPEM`: RSA private key in PEM format (PKCS#8 or PKCS#1)
 - `baseURL`: Base URL of the YoMemoAI API (e.g., `https://api.yomemo.ai`)
 
-#### `Add(ctx context.Context, opts AddOpts) error`
+#### `Add(ctx context.Context, opts AddOpts) (MemoryResponse, error)`
 
-Adds a new encrypted memory to the server.
+Adds a new encrypted memory or updates an existing one (upsert when `IdempotentKey` is set). Returns `MemoryResponse` with `MemoryID`, `Action` (`created` or `updated`), and `IdempotentKey`.
 
 **Parameters:**
 - `opts`: `AddOpts` struct containing:
   - `Content` (required): The content to encrypt and store
   - `Handle`: Optional handle/tag for categorization
   - `Description`: Optional description
+  - `IdempotentKey`: Optional. When set, if a memory with the same (handle, idempotent_key) exists, it is updated; otherwise a new memory is created.
   - `Metadata`: Optional key-value metadata map
 
 #### `GetMemories(ctx context.Context, options QueryOptions) ([]Memory, error)`
@@ -191,7 +193,7 @@ Retrieves memories with optional filtering and pagination. Content is automatica
 
 #### `GetMemoriesByHandle(ctx context.Context, handle string, options QueryOptions) ([]Memory, error)`
 
-Retrieves memories filtered by a specific handle. Content is automatically decrypted.
+Retrieves memories filtered by a specific handle. Content is automatically decrypted. The `handle` is URL-encoded by the SDK before the request.
 
 #### `DeleteMemories(ctx context.Context, memoIDs []string) error`
 
@@ -199,7 +201,7 @@ Deletes memories by their IDs.
 
 #### `DeleteMemoriesByHandle(ctx context.Context, handle string) error`
 
-Deletes all memories with a specific handle.
+Deletes all memories with a specific handle. The `handle` is URL-encoded by the SDK before the request.
 
 ## Complete Example
 
@@ -234,8 +236,8 @@ func main() {
 
 	ctx := context.Background()
 
-	// Save a memory
-	err = client.Add(ctx, memo.AddOpts{
+	// Save a memory (resp.Action is "created" or "updated" when using IdempotentKey)
+	resp, err := client.Add(ctx, memo.AddOpts{
 		Content:     "My coffee machine password is 8888",
 		Handle:      "passwords",
 		Description: "Coffee machine credentials",
@@ -246,7 +248,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to save: %v", err)
 	}
-	fmt.Println("✅ Memory saved")
+	fmt.Printf("✅ Memory %s (id: %s)\n", resp.Action, resp.MemoryID)
 
 	// Retrieve memories
 	memories, err := client.GetMemories(ctx, memo.QueryOptions{

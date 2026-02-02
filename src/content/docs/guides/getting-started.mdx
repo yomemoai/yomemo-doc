@@ -171,12 +171,13 @@ When you ask your AI assistant to recall a memory:
 
 ### `save_memory`
 
-Store important information, user preferences, or conversation context.
+Store important information, user preferences, or conversation context. When you use the same `idempotent_key` with the same `handle`, the existing memory is updated (upsert) instead of creating a duplicate.
 
 **Parameters:**
 - `content` (required): The information to be remembered
 - `handle` (optional): A category or tag (e.g., 'work', 'personal', 'project-x'). Defaults to 'general'
 - `description` (optional): A brief summary
+- `idempotent_key` (optional): A stable key for upsert. If a memory with the same (handle, idempotent_key) already exists, it is updated; otherwise a new memory is created. Use for project progress, habit tracking, or avoiding duplicate memories.
 
 ### `load_memories`
 

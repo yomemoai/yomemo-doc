@@ -35,6 +35,10 @@ export default defineConfig({
           ],
         },
         {
+          label: "Scenarios",
+          autogenerate: { directory: "scenarios" },
+        },
+        {
           label: "Integrations",
           autogenerate: { directory: "integrations" },
         },

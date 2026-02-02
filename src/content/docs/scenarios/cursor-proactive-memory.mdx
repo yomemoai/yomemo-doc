@@ -1,0 +1,98 @@
+---
+title: Auto-Save Important Decisions in Cursor
+description: Configure YoMemo rules in Cursor so the AI proactively saves decisions, tech choices, and preferences encrypted—no need to say "remember this" every time.
+---
+
+import { Steps, Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+This scenario shows how to use **Cursor** with YoMemo MCP so the AI **proactively and securely** saves important decisions and preferences—tech stack, business rules, coding habits—with end-to-end encryption. In new chats or when starting a new feature, the AI loads relevant memories automatically so you don't have to repeat yourself.
+
+## Why Auto-Save Important Decisions
+
+- **Less repetition**: Tech stack, business rules, and preferences are stated once; later conversations use memories.
+- **Secure and traceable**: All memories are encrypted on the client before upload; the server cannot decrypt them; only you hold the key.
+- **Low friction**: No need to say "remember this" or "save this"—the AI calls `save_memory` when it detects important information, and replies with ✓ after saving.
+
+## Prerequisites
+
+- [YoMemo MCP](/integrations/python-mcp/) (`yomemoai-mcp`) is configured in Cursor with your API key and RSA private key path.
+- `save_memory` and `load_memories` work correctly.
+
+## Configure the Proactive Memory Rule
+
+Add a rule in Cursor that tells the AI **when to save** and **when to load** memories. Two options:
+
+### Option 1: Cursor global / project Rules for AI
+
+1. Open Cursor settings → **Rules for AI**.
+2. Add a new rule and paste the following:
+
+```text
+You are equipped with Yomemo.ai MCP.
+
+## When to use `save_memory`:
+- **Tech Stack**: When we decide on a specific library or version.
+- **Business Logic**: When I explain a complex internal rule.
+- **Preferences**: If I tell you "I prefer using early returns in Go".
+
+## When to use `load_memories`:
+- At the start of a new feature implementation, check if there's relevant context in the 'coding' or 'project-name' handle.
+
+## Feedback:
+- After saving, just add a ✓ in your response. No need for a long confirmation.
+```
+
+3. Save. In that project or globally, the AI will follow this rule and call `save_memory` / `load_memories` proactively.
+
+<Aside type="tip">
+Replace <code>project-name</code> in the rule with your project name or a handle you use (e.g. <code>memo</code>, <code>yomemoai</code>) so memories are organized per project.
+</Aside>
+
+### Option 2: Project-level rule file (.cursor/rules)
+
+To apply the rule only in the current project:
+
+1. Create `.cursor/rules/` in the project root (if it doesn't exist).
+2. Add a file there, e.g. `yomemo-memory.mdc`.
+3. Paste the full rule from the block above into that file and save.
+
+The AI will then use this proactive memory rule only when Cursor is opened in this project.
+
+## Rule Summary
+
+| Scenario | Behavior |
+| :--- | :--- |
+| **Tech Stack** | When you agree on a library, framework, or version (e.g. "we'll use React 19", "Go 1.24"), the AI should call `save_memory` with that decision, e.g. under handle `coding` or the project name. |
+| **Business / internal rules** | When you explain a complex internal rule (e.g. "orders unpaid after 3 days are auto-cancelled"), the AI should save it for later implementation or debugging. |
+| **Preferences** | When you state a coding or tool preference (e.g. "I prefer early returns in Go", "use Tailwind, no inline styles"), the AI should save it so future replies follow it. |
+| **Start of new feature / new chat** | Before implementing, the AI should call `load_memories` and check handles like `coding` or the project handle for relevant tech stack, rules, and preferences. |
+| **After saving** | After a successful save, the AI adds ✓ in its reply—no long confirmation, so the conversation stays smooth. |
+
+## What You Get
+
+<CardGrid>
+  <Card title="Proactive save" icon="forward-slash">
+    The AI calls <code>save_memory</code> when it recognizes **preferences, decisions, or reusable logic**—no need to say "remember this" every time.
+  </Card>
+  <Card title="Low-friction feedback" icon="puzzle">
+    After saving, the AI just adds ✓ so the flow isn't interrupted.
+  </Card>
+  <Card title="Auto-load in new chats" icon="magnifier">
+    When starting a new chat or feature, the AI calls <code>load_memories</code> and uses that context in its answers.
+  </Card>
+  <Card title="End-to-end encryption" icon="key">
+    All memories are encrypted locally before upload; the server cannot decrypt them. See [Security](/features/security/).
+  </Card>
+</CardGrid>
+
+## How This Relates to YoMemo MCP
+
+This scenario depends on the [Python MCP integration](/integrations/python-mcp/) (yomemoai-mcp). The rule only **defines when** the AI calls `save_memory` / `load_memories`; encryption, storage, and retrieval are done by the MCP and YoMemo backend. If MCP isn't set up yet, follow the [Getting Started](/guides/getting-started/) MCP configuration first.
+
+For more details, see [CURSOR_RULES.md in the python-yomemo-mcp repo](https://github.com/yomemoai/python-yomemo-mcp/blob/main/CURSOR_RULES.md).
+
+## Next Steps
+
+- Adjust the handle in the rule (e.g. `coding`, project name) so memories are grouped by project or purpose.
+- Learn about [save_memory's idempotent_key](/guides/getting-started/#save_memory) for updating the same decision without creating duplicate memories.
+- Explore other [use cases](/guides/use-cases/) and [integrations](/integrations/python-mcp/).
