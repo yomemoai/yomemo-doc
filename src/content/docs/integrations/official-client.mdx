@@ -1,0 +1,102 @@
+---
+title: Official Desktop & Mobile Client
+description: Use the free YoMemo app on Windows, macOS, iOS, and Android to manage encrypted memories with a local lock and the same encryption as MCP.
+---
+
+import { Steps, Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+The **YoMemo Official Client** is a Flutter app for Windows, macOS, iOS, and Android. It uses the same hybrid encryption (RSA-OAEP + AES-GCM) as [python-yomemo-mcp](/integrations/python-mcp/), so memories you save in the client are compatible with MCP and the REST API. The app includes a local password lock and idle timeout to protect access on your device.
+
+## Features
+
+<CardGrid>
+  <Card title="Same encryption as MCP" icon="key">
+    Memories are encrypted client-side; the server never sees plaintext. You can use the client and MCP with the same API key and private key.
+  </Card>
+  <Card title="Local lock" icon="forward-slash">
+    Set a local password and optional idle timeout. Lock immediately with <kbd>Ctrl+L</kbd> (Windows/Linux) or <kbd>⌘+L</kbd> (macOS).
+  </Card>
+  <Card title="Handle-based list" icon="magnifier">
+    View and edit memories grouped by handle. Add, edit, and refresh from the home screen.
+  </Card>
+  <Card title="Free to use" icon="puzzle">
+    Open source; download from GitHub Releases. No subscription required for the app itself (YoMemo storage limits still apply per your account).
+  </Card>
+</CardGrid>
+
+## Download
+
+Pre-built installers and archives are published on GitHub:
+
+- **[Releases](https://github.com/yomemoai/yomemoai-client/releases)** — download the latest version for your platform.
+
+| Platform | File | Notes |
+|----------|------|--------|
+| **Windows** | `yomemoai-client-windows.zip` | Extract the zip, then run `yomemo_client.exe` **inside** the extracted folder. Do not move the exe out of the folder (it needs the adjacent `data/` and DLLs). |
+| **macOS** | `yomemoai-client-macos.zip` | Unzip and open the `.app`. You may need to right-click → Open the first time if the app is not notarized. |
+
+<Aside type="tip">
+  The client is built from [yomemoai/yomemoai-client](https://github.com/yomemoai/yomemoai-client). To build from source (e.g. for Linux or a specific platform), see the repo’s README and Flutter docs.
+</Aside>
+
+## Prerequisites
+
+Before using the app you need:
+
+- A **YoMemo API key** — get one at [yomemo.ai](https://yomemo.ai) (sign up / dashboard).
+- An **RSA private key** (PEM file) — same key you use with MCP or the Go SDK. If you don’t have one:
+  ```bash
+  openssl genrsa -out private.pem 2048
+  ```
+  Keep `private.pem` secure and never share it.
+
+## First-time setup
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Install and open the app</h3>
+      Download the right package from [Releases](https://github.com/yomemoai/yomemoai-client/releases), extract (Windows) or open the app (macOS). On first launch you may see a request to allow network or storage; allow as needed.
+    </li>
+    <li>
+      <h3>Set a local password</h3>
+      The app will ask you to set a **local password**. This protects access on this device only (it is not sent to the server). Choose a strong password and confirm it. You will use this to unlock the app after it locks (e.g. after idle timeout or manual lock).
+    </li>
+    <li>
+      <h3>Configure API key and private key</h3>
+      Open **Settings** (gear icon in the app bar). Enter your **YoMemo API Key** and choose your **Private Key File** (the path to your PEM file). Save. The app will load your existing memories and you can add or edit them.
+    </li>
+  </ol>
+</Steps>
+
+<Aside type="caution">
+  The private key file is read when you configure it and when syncing; the app does not store the key contents. Keep the PEM file in a safe place and do not lose it, or you will not be able to decrypt your memories.
+</Aside>
+
+## Using the app
+
+- **Home screen** — Lists memories grouped by handle. Use the **refresh** button to sync with the server. Use the **+** (FAB) to add a new memory (handle, content, optional description and idempotent key).
+- **Edit / view** — Tap a memory to view or edit it. Changes are encrypted and sent to YoMemo; they are compatible with MCP and the API.
+- **Lock** — Use the lock icon in the app bar or <kbd>Ctrl+L</kbd> / <kbd>⌘+L</kbd> to lock immediately. After the idle timeout (configurable in Settings), the app locks automatically.
+- **Settings** — Change API key, private key file path, and lock timeout (minutes). You can also change your local password from Settings if you have already set one.
+- **Help** — The help menu (?) links to the [documentation](https://docs.yomemo.ai) and the [GitHub repo](https://github.com/yomemoai/yomemoai-client).
+
+## Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| <kbd>Ctrl+L</kbd> (Windows/Linux) / <kbd>⌘+L</kbd> (macOS) | Lock the app immediately |
+
+## Security
+
+- **Encryption** — Same as MCP: client-side hybrid encryption (RSA-OAEP + AES-GCM). The server only stores ciphertext.
+- **Local lock** — Your local password and lock timeout protect access on the device only; they are not sent to YoMemo.
+- **Private key** — Stored only as a file path in app settings; the key is read from disk when needed. Prefer a key file that only the current user can read (e.g. permissions `600` on Unix).
+
+For more, see [Security](/features/security/) and [How it works](/guides/how-it-works/).
+
+## Next steps
+
+- Get an API key and create a key pair: [Getting started](/guides/getting-started/)
+- Use the same key with [Python MCP](/integrations/python-mcp/) or [Go SDK](/integrations/go-sdk/) so memories stay in sync across tools
+- Read the [API reference](/api/reference/) for direct HTTP access
