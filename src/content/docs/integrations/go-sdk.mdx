@@ -135,7 +135,7 @@ go get github.com/yomemoai/yomemo-go-sdk
       
       ```go
       memories, err := client.GetMemories(ctx, memo.QueryOptions{
-          PageSize:  10,
+          Limit:     10,
           Filters:   map[string]interface{}{"category": "credentials"},
           Ascending: true,
       })
@@ -184,7 +184,7 @@ Adds a new encrypted memory or updates an existing one (upsert when `IdempotentK
 Retrieves memories with optional filtering and pagination. Content is automatically decrypted.
 
 **QueryOptions:**
-- `PageSize`: Number of results per page
+- `Limit`: Number of results to return
 - `Cursor`: Pagination cursor (from previous response)
 - `StartTime`: Unix timestamp for start time filter
 - `EndTime`: Unix timestamp for end time filter
@@ -251,8 +251,8 @@ func main() {
 	fmt.Printf("✅ Memory %s (id: %s)\n", resp.Action, resp.MemoryID)
 
 	// Retrieve memories
-	memories, err := client.GetMemories(ctx, memo.QueryOptions{
-		PageSize: 10,
+memories, err := client.GetMemories(ctx, memo.QueryOptions{
+		Limit: 10,
 	})
 	if err != nil {
 		log.Fatalf("Failed to get memories: %v", err)

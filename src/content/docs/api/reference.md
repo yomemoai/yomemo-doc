@@ -74,16 +74,41 @@ Retrieve memories with optional filtering and pagination.
 | Parameter | Type | Description |
 | :----------- | :----- | :---------------------------------------------- |
 | `handle` | string | Optional. Filter memories by handle. Value is URL-encoded by the server. |
-| `page_size` | int | Optional. Number of results per page. |
+| `limit` | int | Optional. Number of results to return. |
 | `cursor` | string | Optional. Pagination cursor from previous response. |
 | `start_time` | int64 | Optional. Unix timestamp for start time filter. |
 | `end_time` | int64 | Optional. Unix timestamp for end time filter. |
 | `filters` | string | Optional. JSON-encoded metadata filters. |
 | `ascending` | bool | Optional. Sort order (true = ascending). |
 
+**Response:**
+
+- HTTP **200 OK**
+- Body:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "description": "string",
+      "handle": "string",
+      "user_uuid": "string",
+      "content": "encrypted content (ciphertext)",
+      "idempotent_key": "string",
+      "created_at": "RFC3339 timestamp",
+      "metadata": { "key": "value" }
+    }
+  ],
+  "next_cursor": "base64-encoded cursor or empty string"
+}
+```
+
+- Use `next_cursor` as the `cursor` query parameter on the next request to fetch the following page. When `next_cursor` is empty, there is no further page.
+
 **Example:**
 
 ```bash
-curl -X GET "https://api.yomemo.ai/api/v1/memory?handle=passwords&page_size=10" \
+curl -X GET "https://api.yomemo.ai/api/v1/memory?handle=passwords&limit=10" \
      -H "X-Memo-API-Key: your_api_key_here"
 ```
