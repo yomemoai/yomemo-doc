@@ -40,17 +40,10 @@ Before you begin, you need:
     </li>
 
     <li>
-      <h3>Generate Your RSA Key Pair</h3>
-      If you don't have an RSA key pair yet, generate one:
-      
-      ```bash
-      # Using OpenSSL
-      openssl genrsa -out private.pem 2048
-      ```
-      
-      <Aside type="caution">
-        Keep your private key secure! Never share it or commit it to version control. If you lose it, you cannot recover your encrypted data.
-      </Aside>
+      <h3>Get Your RSA Key Pair and Register Your Public Key</h3>
+      You need an RSA private key (PEM) for the MCP server, and the server must have your public key. We recommend creating the key pair **locally** (zero-trust); you can also generate it in the dashboard for a quick try.
+
+      Follow the dedicated guide: **[Key Pairs (Public & Private)](/guides/key-pairs/)** — it covers online vs. local generation, how to upload your public key if you generate locally, and security notes. Once you have <code>private.pem</code> and the public key is registered, continue below.
     </li>
 
     <li>
@@ -58,7 +51,7 @@ Before you begin, you need:
       Add the MCP server configuration to your client. The configuration location depends on your tool:
       
       <h4>For Cursor</h4>
-      Edit `~/.cursor/mcp.json` (or `%APPDATA%\Cursor\User\mcp.json` on Windows):
+      Edit <code>~/.cursor/mcp.json</code> (Windows: <code>%APPDATA%\Cursor\User\mcp.json</code>):
       
       ```json
       {
@@ -68,7 +61,7 @@ Before you begin, you need:
             "args": ["yomemoai-mcp"],
             "env": {
               "MEMO_API_KEY": "your_api_key_here",
-              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_PRIVATE_KEY_PATH": "/path/to/private.pem",
               "MEMO_BASE_URL": "https://api.yomemo.ai"
             }
           }
@@ -77,7 +70,7 @@ Before you begin, you need:
       ```
       
       <h4>For Claude Desktop</h4>
-      Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+      Edit <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS) or <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows):
       
       ```json
       {
@@ -87,7 +80,7 @@ Before you begin, you need:
             "args": ["yomemoai-mcp"],
             "env": {
               "MEMO_API_KEY": "your_api_key_here",
-              "MEMO_PRIVATE_KEY_PATH": "/absolute/path/to/private.pem",
+              "MEMO_PRIVATE_KEY_PATH": "/path/to/private.pem",
               "MEMO_BASE_URL": "https://api.yomemo.ai"
             }
           }
@@ -96,7 +89,7 @@ Before you begin, you need:
       ```
       
       <Aside type="note">
-        Replace `/absolute/path/to/private.pem` with the **absolute path** to your private key file. Use forward slashes even on Windows (e.g., `C:/Users/YourName/private.pem`).
+        Replace <code>/path/to/private.pem</code> with the **absolute path** to your private key. Use forward slashes on Windows too (e.g. <code>C:/Users/You/private.pem</code>).
       </Aside>
     </li>
 
@@ -206,8 +199,8 @@ If the MCP server fails to start:
 
    ```bash
    MEMO_API_KEY="your_api_key" \
-   MEMO_PRIVATE_KEY_PATH="/path/to/private.pem" \
-   uvx yomemoai-mcp
+     MEMO_PRIVATE_KEY_PATH="/path/to/private.pem" \
+     uvx yomemoai-mcp
    ```
 
 ### Connection Issues

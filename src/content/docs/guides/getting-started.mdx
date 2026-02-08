@@ -59,19 +59,10 @@ The Python MCP integration is the recommended way to get started, especially if 
     </li>
 
     <li>
-      <h3>Generate Your RSA Key Pair</h3>
-      You need an RSA private key for encryption. Generate one if you don't have it:
-      
-      ```bash
-      # Using OpenSSL
-      openssl genrsa -out private.pem 2048
-      ```
-      
-      Or use the Go SDK to generate one programmatically (see [Go SDK Integration](/integrations/go-sdk/)).
-      
-      <Aside type="caution">
-        **Critical**: Keep your private key secure! Never share it or commit it to version control. If you lose it, you cannot recover your encrypted data. The server only stores your public key and cannot decrypt your memories.
-      </Aside>
+      <h3>Generate Your RSA Key Pair and Register Your Public Key</h3>
+      You need an RSA key pair: the **private key** stays on your machine for decryption; the **public key** must be registered with YoMemo so the server can verify your encrypted data. We recommend creating keys **locally** (zero-trust); you can also generate them in the dashboard for a quick try.
+
+      See the dedicated guide: **[Key Pairs (Public & Private)](/guides/key-pairs/)** — it covers both options (online vs. local), how to upload your public key if you generate locally, and security notes.
     </li>
 
     <li>

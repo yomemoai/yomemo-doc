@@ -80,6 +80,8 @@ Retrieve memories with optional filtering and pagination.
 | `end_time` | int64 | Optional. Unix timestamp for end time filter. |
 | `filters` | string | Optional. JSON-encoded metadata filters. |
 | `ascending` | bool | Optional. Sort order (true = ascending). |
+| `only_metadata` | bool | Optional. When `true`, returns only lightweight fields (id, handle, user_uuid, created_at, metadata); `description` and `content` are omitted/empty. |
+| `only_summary` | bool | Optional. When `true`, returns description and metadata but omits the encrypted `content` field. |
 
 **Response:**
 

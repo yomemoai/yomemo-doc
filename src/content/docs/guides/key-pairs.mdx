@@ -1,0 +1,95 @@
+---
+title: Key Pairs (Public & Private Keys)
+description: Understand and create RSA key pairs for YoMemo—zero-trust local generation vs. quick online generation, and how to upload your public key.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+YoMemo uses **RSA key pairs** for end-to-end encryption: your **private key** stays on your device to decrypt data and sign it; your **public key** is sent to the server so it can verify signatures and associate ciphertext with you. The server never sees your private key and cannot decrypt your memories.
+
+## Why the server needs your public key
+
+- The server stores only **encrypted** data and your **public key**.
+- The public key is used to **verify** that incoming encrypted packages were signed by the matching private key.
+- Without a registered public key, the server cannot accept your encrypted memories.
+
+If you generate the key pair **locally**, you must **upload the public key once** (see [Upload your public key (local key only)](#upload-your-public-key-local-key-only) below). If you generate it **in the YoMemo dashboard**, the public key is registered for you automatically.
+
+## Recommendation
+
+<Aside type="tip" title="Zero-trust recommendation">
+We recommend **zero-trust**: create your key pair **locally** (Option B) so the private key never leaves your machine and your data stays fully under your control. Use **cloud generation** (Option A) only when you want to try the product quickly.
+</Aside>
+
+## Option A: Generate online (quick try)
+
+You can generate a key pair in the YoMemo dashboard and download the PEM file directly. Use this only for a quick try; for production or sensitive data, prefer Option B.
+
+1. Log in to [YoMemoAI](https://api.yomemo.ai) → **Settings** → **Public Key**.
+2. Click **Generate Key Pair** (or equivalent). The public key is registered automatically; download and save the **private key** PEM file (e.g. `private.pem`).
+
+<img src="/img/python-mcp-online-keys.png" alt="YoMemo Settings: generate key pair and download PEM" width="720" />
+
+## Option B: Generate locally (OpenSSL) — recommended
+
+Generate the key pair on your machine. The private key never leaves your device; maximum security.
+
+```bash
+# Using OpenSSL
+openssl genrsa -out private.pem 2048
+```
+
+<Aside type="caution">
+Keep your private key secure! Never share it or commit it to version control. If you lose it, you cannot recover your encrypted data.
+</Aside>
+
+## Upload your public key (local key only)
+
+If you used **Option B** (local OpenSSL), you must upload your public key to YoMemo once. The server expects the **Base64-encoded RSA modulus** (not the full PEM). If you used Option A, skip this section.
+
+1. Log in to [YoMemoAI](https://api.yomemo.ai) → **Settings** → **Public Key**.
+2. Click **Manually Update Public Key**.
+3. Get the public key in the required format from the directory containing `private.pem`:
+
+   **macOS / Linux (OpenSSL + xxd):**
+
+   ```bash
+   openssl rsa -in private.pem -noout -modulus \
+     | sed 's/Modulus=//' | xxd -r -p | base64
+   ```
+
+   **Any platform (Python 3 with `cryptography`):**
+
+   ```bash
+   pip install cryptography
+   ```
+
+   Then run (from the directory containing `private.pem`):
+
+   ```python
+   python3 -c "
+   from cryptography.hazmat.primitives.serialization import (
+       load_pem_private_key,
+   )
+   from cryptography.hazmat.backends import default_backend
+   import base64
+
+   with open('private.pem', 'rb') as f:
+       k = load_pem_private_key(f.read(), None, default_backend())
+   n = k.public_key().public_numbers().n
+   byte_len = (n.bit_length() + 7) // 8
+   print(base64.b64encode(n.to_bytes(byte_len, 'big')).decode())
+   "
+   ```
+
+4. Paste the single-line Base64 string into the dialog and click **Update Public Key**.
+
+<Aside type="caution">
+Without this step, the server cannot verify your encrypted memories and MCP (or other client) operations will fail. You only need to do this once per key pair.
+</Aside>
+
+## Next steps
+
+- [Getting Started](/guides/getting-started/) — configure and use YoMemo with Python MCP
+- [Python MCP Integration](/integrations/python-mcp/) — detailed MCP setup
+- [How It Works](/guides/how-it-works/) — encryption architecture

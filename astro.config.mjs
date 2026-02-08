@@ -30,6 +30,7 @@ export default defineConfig({
           label: "Guides",
           items: [
             { label: "Getting Started", slug: "guides/getting-started" },
+            { label: "Key Pairs (Public & Private)", slug: "guides/key-pairs" },
             { label: "Use Cases", slug: "guides/use-cases" },
             { label: "How It Works", slug: "guides/how-it-works" },
           ],
