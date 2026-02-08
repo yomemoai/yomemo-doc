@@ -7,9 +7,9 @@ import mermaid from "astro-mermaid";
 // https://astro.build/config
 export default defineConfig({
   // Static site output (default for Starlight)
-  output: 'static',
+  output: "static",
   // Site URL for canonical URLs and sitemap generation
-  site: 'https://docs.yomemo.ai',
+  site: "https://docs.yomemo.ai",
   integrations: [
     starlight({
       title: "YoMemo",
@@ -27,12 +27,19 @@ export default defineConfig({
       ],
       sidebar: [
         {
+          label: "YomMemo.ai",
+          link: "https://yomemo.ai",
+        },
+        {
           label: "Guides",
           items: [
             { label: "Getting Started", slug: "guides/getting-started" },
             { label: "Key Pairs (Public & Private)", slug: "guides/key-pairs" },
             { label: "Managing Memories", slug: "guides/managing-memories" },
-            { label: "Memory Classification & Insights", slug: "guides/memory-classification-and-insights" },
+            {
+              label: "Memory Classification & Insights",
+              slug: "guides/memory-classification-and-insights",
+            },
             { label: "Use Cases", slug: "guides/use-cases" },
             { label: "How It Works", slug: "guides/how-it-works" },
           ],
