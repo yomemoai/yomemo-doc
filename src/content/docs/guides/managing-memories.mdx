@@ -1,0 +1,41 @@
+---
+title: Managing Memories
+description: How to view, add, edit, and delete encrypted memories—server stores only metadata and ciphertext; use the Official Client or the standard API.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+On YoMemo, **memory content is encrypted end-to-end**. The server stores only a small amount of **metadata** and **non-sensitive summaries** (e.g. for search or listing); the actual content is **ciphertext** that only you can decrypt with your private key. This raises a practical question: **how do you manually view, edit, and manage your memories?**
+
+## Solution: Official Desktop & Mobile Client
+
+The **Official Desktop & Mobile Client** lets you manage memories in a graphical interface:
+
+- **View** — Decrypt and read memory content on your device.
+- **Add** — Create new memories (handle, content, optional description and idempotent key).
+- **Edit / Delete** — Change or remove memories; changes are encrypted and synced via the API.
+
+The client is **fully open source** and uses only the **YoMemoAI standard API** to read and write data. No proprietary protocols; everything goes through the same REST API that MCP, the Go SDK, and the CLI use. Your existing memories from MCP or other integrations appear in the client, and edits stay in sync.
+
+<Aside type="tip">
+  Download the client from [GitHub Releases](https://github.com/yomemoai/yomemoai-client/releases). Full setup and usage: [Official Desktop & Mobile Client](/integrations/official-client/).
+</Aside>
+
+## Or use the standard API yourself
+
+You can also manage memories **without the client**, by calling the YoMemo API directly:
+
+- **Save** — `save_memory` (MCP) or the equivalent REST endpoints to create/update memories.
+- **Load** — `load_memories` (MCP) or REST to list and retrieve ciphertext; decrypt locally with your private key.
+- **Delete** — Use the API to delete by memory ID or handle when supported.
+
+The [API Reference](/api/reference/) describes the HTTP interface. The client, MCP, Go SDK, and CLI all build on this same API—so you can mix and match tools and keep one source of truth.
+
+## Summary
+
+| Need | Option |
+|------|--------|
+| **Manual view / add / edit / delete** | [Official Desktop & Mobile Client](/integrations/official-client/) (open source, standard API) |
+| **Programmatic or scripted** | [Python MCP](/integrations/python-mcp/), [Go SDK](/integrations/go-sdk/), [CLI](/integrations/yomemo-cli/), or [REST API](/api/reference/) |
+
+The server never sees your plaintext; you manage access and changes either through the client or through the same standard API the client uses.

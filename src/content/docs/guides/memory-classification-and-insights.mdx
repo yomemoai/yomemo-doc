@@ -1,0 +1,74 @@
+---
+title: Memory Classification & Insights
+description: How YoMemo classifies memories when you save via MCP—E/L/A/P radar, handle distribution, memory spectrum, capacity tips—and the roadmap toward long-term and short-term memory to improve your life.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+When you save memories through MCP (or other integrations), YoMemo does not only store encrypted content. We attach a **semantic fingerprint** to each memory so you can understand and balance your knowledge base over time. This page introduces the classification system and the direction we are building toward.
+
+## How we classify memories
+
+For each saved memory, we use the following dimensions to organize and surface insights:
+
+### E/L/A/P radar
+
+Every memory can be scored on four axes (0–1 each), stored in the memory’s **semantic fingerprint**:
+
+| Dimension | Meaning |
+|-----------|--------|
+| **E — Emotion** | Subjective mood or feeling in the content |
+| **L — Logic** | Technical density and factual derivation |
+| **A — Abstraction** | Philosophical depth and underlying patterns |
+| **P — Pragmatism** | Actionability and execution value |
+
+These scores are optional metadata (e.g. provided by the AI when it calls `save_memory`). In the YoMemo dashboard, **Pro** users can see an **E/L/A/P radar** that aggregates these scores across memories, so you can see at a glance whether your base is skewed toward emotion, logic, abstraction, or pragmatism—and adjust how you record things if you want more balance.
+
+### Handle distribution
+
+Memories are grouped by **handle** (e.g. `work`, `personal`, `project-x`). The dashboard shows how many memories you have per handle. This helps you see which areas of your life or work are most represented and avoid overloading a single handle.
+
+### Memory spectrum
+
+A visual spectrum of your memories (e.g. one tile per memory, colored by Emotion: cool = low, warm = high) gives a quick picture of the “temperature” and variety of your stored content. Gray tiles indicate memories without ELAP data.
+
+### Capacity & balance tips
+
+As your memory base grows, we surface simple **capacity and balance suggestions**, for example:
+
+- Too many memories in total — consider archiving or consolidating.
+- Too many handles — consider merging or renaming.
+- Strong bias toward logic (L) or emotion (E) — optional nudge to add more of the other.
+
+These tips are designed to keep your memory graph useful and readable, not to restrict you.
+
+<Aside type="tip">
+  The full **Insights** experience (E/L/A/P radar, handle distribution, memory spectrum, and balance tips) is available in the YoMemo dashboard for **Pro** users. The same semantic fingerprint data can be used by other clients or the API if you build your own tools.
+</Aside>
+
+## Long-term and short-term memory (roadmap)
+
+Today, every memory is stored in one encrypted pool. As the product and your usage grow, we plan to **gradually introduce long-term and short-term memory**:
+
+- **Short-term** — Recent or frequently accessed items, or items you mark as ephemeral; easier to surface in daily use and optionally to expire or demote.
+- **Long-term** — Core knowledge and decisions you want to keep and reuse over years.
+
+Memories will continue to be encrypted and under your control. The goal is to make the system **continuously improve your life**: the right information at the right time, without clutter, and with a clear view of how your knowledge is balanced (E/L/A/P, handles, spectrum) and how it evolves.
+
+## Summary
+
+| Concept | Role |
+|--------|------|
+| **E/L/A/P radar** | Classify and visualize each memory on Emotion, Logic, Abstraction, Pragmatism (0–1). |
+| **Handle distribution** | See how memories are spread across handles; avoid overload. |
+| **Memory spectrum** | Visual overview of variety (e.g. by Emotion). |
+| **Capacity & balance tips** | Light suggestions to keep the base healthy. |
+| **Long-term / short-term (planned)** | Gradually expose different retention and surfacing for different kinds of memory. |
+
+Saving via MCP (with optional `metadata.semantic_fingerprint`) feeds this system; the dashboard and future features use it to help you understand and grow your memory in a way that **continuously improves your life**.
+
+## See also
+
+- [Getting Started](/guides/getting-started/) — save your first memories with MCP
+- [Python MCP Integration](/integrations/python-mcp/) — how to pass metadata when saving
+- [Managing Memories](/guides/managing-memories/) — view and manage memories in the Official Client or via API

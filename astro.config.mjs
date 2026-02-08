@@ -31,6 +31,8 @@ export default defineConfig({
           items: [
             { label: "Getting Started", slug: "guides/getting-started" },
             { label: "Key Pairs (Public & Private)", slug: "guides/key-pairs" },
+            { label: "Managing Memories", slug: "guides/managing-memories" },
+            { label: "Memory Classification & Insights", slug: "guides/memory-classification-and-insights" },
             { label: "Use Cases", slug: "guides/use-cases" },
             { label: "How It Works", slug: "guides/how-it-works" },
           ],
