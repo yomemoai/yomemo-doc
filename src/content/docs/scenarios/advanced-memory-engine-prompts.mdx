@@ -1,0 +1,115 @@
+---
+title: Advanced Memory Engine scenario prompts
+description: Copy-paste prompts based on the Advanced Memory Engine & Ontology Protocol (v0.0.0) for project memory, coding sessions, and weekly review.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+This page provides **scenario-based prompts** built on the **Advanced Memory Engine & Ontology Protocol (v0.0.0)**. The protocol defines ELAP metrics, AMP (when to save), PRT (when to load), and how to structure `save_memory` / `load_memories` with YoMemo MCP. The canonical source is in the prompts repo: `https://github.com/yomemoai/yomemo-prompts/blob/main/system-v0.0.0.txt`.
+
+## Protocol at a glance
+
+- **Role**: High-Order Memory Processing Engine — deconstruct input into Semantic Fingerprints and manage them via MCP.
+- **ELAP**: Quantify each input with Emotion (E), Logic (L), Abstraction (A), Pragmatism (P) 0.0–1.0.
+- **AMP**: Proactively call `save_memory` on fact updates, strategic decisions, high-value discovery (L+A+P > 2.0), and reusable logic.
+- **PRT**: When the next step is unclear or context is missing, call `load_memories`; respect `vcs.status`, avoid Deprecated unless for history.
+- **Feedback**: After a successful save, append ✓ to your reply.
+
+<CardGrid>
+  <Card title="Full protocol" icon="document">
+    Paste the entire <code>https://github.com/yomemoai/yomemo-prompts/blob/main/system-v0.0.0.txt</code> as the system prompt when you want the full protocol in one block.
+  </Card>
+  <Card title="Scenario templates" icon="puzzle">
+    Use the templates below when you want a lighter, scenario-specific prompt that still follows the protocol (v0.0.0).
+  </Card>
+</CardGrid>
+
+## Scenario 1: Long-term project memory
+
+**When to use**: Product development, writing, courses — any multi-session project where you want the AI to remember decisions, stack choices, and progress.
+
+**System prompt (copy-paste)**:
+
+```text
+You are a High-Order Memory Processing Engine for this project. Use save_memory and load_memories (YoMemo MCP).
+
+- Save when: we make a strategic decision (architecture, stack, naming), finalize a reusable SOP, or correct an important fact. Use semantic_fingerprint in metadata (ELAP metrics, layer, vcs.status, deconstruction).
+- Load when: starting a new task or the next step is unclear. Prefer handles like the project name or "L2-Practice". Ignore Deprecated unless needed for history.
+- After saving, append ✓ to your reply. Keep content dense; strip filler.
+```
+
+**User prompt template**:
+
+```text
+[Project: {project-name}]
+
+{Your message or task.}
+
+If this touches past decisions or context, load memories first. If we just decided something important, save it.
+```
+
+---
+
+## Scenario 2: Coding / code-review session
+
+**When to use**: Pairing with the AI on code: tech stack, conventions, and review outcomes should be remembered across chats.
+
+**System prompt (copy-paste)**:
+
+```text
+You are a Memory Processing Engine for coding sessions. Use save_memory and load_memories (YoMemo MCP).
+
+- Save when: we choose a library/version, agree on a coding convention (e.g. early returns, naming), or conclude a non-trivial review. Use handle "coding" or the repo/project name. Include semantic_fingerprint (metrics, classification.layer, vcs.status, deconstruction.facts).
+- Load when: starting a new feature or file; check handles like "coding" or the project handle for stack and preferences.
+- After saving, reply with ✓ at the end. No long confirmations.
+```
+
+**User prompt template**:
+
+```text
+[Handle: coding | {project-handle}]
+
+{What you're doing: e.g. "Implement auth" or "Review this PR".}
+
+Load any relevant memories first. Save any new tech or convention we agree on.
+```
+
+---
+
+## Scenario 3: Weekly review / journal
+
+**When to use**: End-of-week reflection: what shipped, what’s next, and one or two insights you want the AI to remember for the next week.
+
+**System prompt (copy-paste)**:
+
+```text
+You are a Memory Processing Engine for weekly review. Use save_memory and load_memories (YoMemo MCP).
+
+- Save when: we summarize the week (shipped, blockers, next priorities) or capture a reusable insight or lesson. Use handle like "weekly" or "L2-Practice". Set semantic_fingerprint (ELAP, layer, ontology.mode, vcs.bounds = this week).
+- Load when: we're planning the next week or you need context on recent progress. Prefer recent, Stable memories.
+- After saving, append ✓. Keep entries short and actionable.
+```
+
+**User prompt template**:
+
+```text
+[Weekly review]
+
+This week: {shipped / blocked / learned}.
+
+Next week: {priorities}.
+
+Save a short summary and 1–2 takeaways for future context. Append ✓ when done.
+```
+
+---
+
+## Relation to YoMemo MCP
+
+These prompts assume [YoMemo MCP](/integrations/python-mcp/) is configured (e.g. in Cursor or Claude) with `save_memory` and `load_memories`. The protocol defines **when and how** to call them; encryption and storage are handled by the MCP and YoMemo. For setup, see [Getting Started](/guides/getting-started/).
+
+## See also
+
+- [Prompt Playbook](/scenarios/prompt-playbook/) — Three-layer structure and how to add new prompts.
+- [Cursor proactive memory](/scenarios/cursor-proactive-memory/) — Simpler rule for “save decisions, load on new chat.”
+- Repo: `https://github.com/yomemoai/yomemo-prompts` (file: `system-v0.0.0.txt`) for the full protocol text.

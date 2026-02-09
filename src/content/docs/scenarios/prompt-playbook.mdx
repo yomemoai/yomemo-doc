@@ -1,0 +1,42 @@
+---
+title: Prompt Playbook
+description: "How we organize prompts: protocol layer, scenario layer, recipe layer, and the SOP for adding new prompts."
+---
+
+This page explains how **prompts** are organized in the YoMemo docs. As the number of prompts grows, we use a **three-layer structure** and a **uniform prompt shape** so they stay easy to find and reuse.
+
+## Three layers
+
+| Layer | Meaning | Example |
+|-------|--------|--------|
+| **Protocol / capability** | Abstract rules; one protocol can power many scenarios. Few and stable. | [Advanced Memory Engine & Ontology Protocol (v0.0.0)](/scenarios/advanced-memory-engine-prompts/) |
+| **Scenario templates** | One doc per scenario with copy-paste blocks (input → behavior → output). | [Cursor proactive memory](/scenarios/cursor-proactive-memory/), Advanced Memory Engine scenarios |
+| **Recipes (Cookbook)** | One-off, concrete examples (e.g. “this week’s Cursor prompt”); can live in blog or examples. | Ad-hoc prompts you use for a specific setup |
+
+Protocols are the **single source of truth**: scenario docs **reference or trim** them instead of duplicating long blocks, so versions don’t drift.
+
+## Uniform prompt structure (three blocks)
+
+When adding any new prompt, split it into three blocks for easier maintenance and composition:
+
+1. **Role** — Who the model is (e.g. “High-Order Memory Processing Engine”).
+2. **Behavior / Rules** — What it does (checklist for protocols; “input → process → output” for scenarios).
+3. **I/O contract** — What you give it (context, memories, user message) and what it returns (structured fields, append ✓, etc.).
+
+## Scenario docs
+
+- **[Auto-save important decisions in Cursor](/scenarios/cursor-proactive-memory/)** — Use YoMemo MCP in Cursor to save and load memories proactively; no need to say “remember this” every time.
+- **[Advanced Memory Engine scenario prompts](/scenarios/advanced-memory-engine-prompts/)** — ELAP/AMP/PRT protocol (v0.0.0) with copy-paste templates for long-term projects, coding sessions, and weekly review.
+
+## Adding a new prompt
+
+1. **Choose the layer** — Is it a protocol, a scenario template, or a one-off recipe?
+2. **Name and handle** — Pick a filename and (if you manage it in YoMemo) a handle, e.g. `prompt-scenario-weekly-review`.
+3. **Write the three blocks** — Role, Rules, I/O contract.
+4. **Version and tags** — Set vX.Y and which LLM/tool it’s for (Cursor, Claude, GPT, etc.).
+5. **Document or not** — Protocols and main scenarios go into this site; experimental or personal prompts can stay in YoMemo only.
+
+Raw prompt text lives in the dedicated prompts repo  
+`https://github.com/yomemoai/yomemo-prompts`  
+For the Advanced Memory Engine protocol, see:  
+`https://github.com/yomemoai/yomemo-prompts/blob/main/system-v0.0.0.txt`. Scenario pages in the docs reference and trim those protocols.
