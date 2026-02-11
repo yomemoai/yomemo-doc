@@ -40,6 +40,10 @@ export default defineConfig({
               label: "Memory Classification & Insights",
               slug: "guides/memory-classification-and-insights",
             },
+            {
+              label: "Custom Rules for Memory Insights",
+              slug: "guides/custom-rules-for-memory-insights",
+            },
             { label: "Use Cases", slug: "guides/use-cases" },
             { label: "How It Works", slug: "guides/how-it-works" },
           ],

@@ -1,0 +1,319 @@
+---
+title: Custom Rules for Memory Insights
+description: Design Prolog-based rules over YoMemo's semantic fingerprints to detect conflicts, value, emotion, and cross-domain patterns in your memories.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+YoMemo does more than store encrypted text. Every memory can carry a **semantic fingerprint**—metadata that describes its role, value, and emotional tone.  
+The new rule engine lets you turn this fingerprint into **Prolog facts**, and then define your own **logical rules** on top to generate high‑level insights.
+
+This page explains:
+
+- **Why** we use a rule engine for memories
+- **How** memories and metadata become Prolog facts
+- **What** the ruleset JSON looks like
+- **How** to edit rules (JSON + Prolog) in the YoMemo dashboard
+- **Which facts** are currently available for you to use
+
+## Why a rule engine for memories?
+
+When you save a memory, YoMemo’s automatic triggers store more than raw text:
+
+- **Content** — encrypted body of the memory
+- **Metadata** — handle, tags, ELAP scores (Emotion/Logic/Abstraction/Pragmatism), ontology mode, versioning status, and more
+
+These metadata fields define the **attributes** of each memory. Over time, you want to answer questions like:
+
+- *“Which plans conflict with my current core focus?”*
+- *“Which memories have the highest long‑term value?”*
+- *“Where are my emotional hotspots over the last week?”*
+
+Instead of hard‑coding these checks into the client, YoMemo:
+
+1. Converts memories + metadata into **Prolog facts** (a small knowledge base).
+2. Lets you define **rules** in Prolog that express complex conditions.
+3. Maps rule results back into **insights** and **UI components** in the client.
+
+The result is a flexible, explainable engine where you control **what counts as important**.
+
+## Core concepts
+
+- **Memory**: The encrypted content you save via SDK, MCP, or integrations.
+- **Semantic fingerprint**: Structured metadata attached to a memory (ELAP scores, tags, ontology, etc.).
+- **Fact**: A Prolog predicate derived from a memory’s fingerprint, such as `memory/3` or `elap/5`.
+- **Ruleset**: A JSON document that declares available facts, the Prolog source code, and UI‑ready rules.
+- **Rule**: A single query + UI definition that turns facts into human‑readable insights.
+- **Insight**: A concrete result row (e.g. “this plan conflicts with your focus goal”) shown in the client.
+
+## From memories to facts
+
+Behind the scenes, YoMemo’s client and backend transform each saved memory into a set of **Prolog facts**.  
+The transformation is described by the `fact_schema` section of the ruleset JSON.
+
+At a high level:
+
+1. You save a memory with content + metadata (including `semantic_fingerprint` when available).
+2. YoMemo normalizes this metadata.
+3. For each supported predicate in `fact_schema`, YoMemo emits **one or more facts** into the local Prolog knowledge base.
+
+For example (simplified):
+
+```prolog
+% A core memory with an ID, handle and short description
+memory("m-123", work_project, "Draft API design for rule engine").
+
+% ELAP scores for the same memory
+elap("m-123", 0.2, 0.9, 0.7, 0.8).
+
+% Knowledge layer classification
+classification("m-123", l3_models).
+
+% Tags and ontology information
+tag("m-123", feature).
+ontology("m-123", evolving, "depends-on: architecture-v1").
+
+% Versioning / lifecycle
+vcs("m-123", "backend-go", active, "scope: rule-engine").
+```
+
+Each predicate is documented in `fact_schema`, which is also what the schema validator uses to ensure your ruleset is consistent.
+
+<Aside type="note">
+  Facts are derived automatically from stored memories. You do not write facts directly; you only declare which predicates must exist (via <code>fact_schema</code>) and then write rules that consume them.
+</Aside>
+
+## Ruleset JSON structure
+
+A ruleset is a single JSON document that the client and backend share. It is validated by the schema at  
+<code>https://yomemo.ai/schema/ruleset/v1</code> and has four required top‑level keys:
+
+- **`meta`** — versioning and human‑readable metadata.
+- **`fact_schema`** — which Prolog predicates must exist, with argument documentation.
+- **`prolog_source`** — the Prolog program that defines your logic.
+- **`rules`** — individual rules (queries + UI config).
+
+Example (heavily truncated):
+
+```json
+{
+  "meta": {
+    "id": "yomemo-core-v1",
+    "name": "YoMemo Core Rules",
+    "version": "1.0.0",
+    "updated_at": "2026-02-10T09:00:00Z",
+    "description": "Default reasoning ruleset for YoMemo."
+  },
+  "fact_schema": [
+    {
+      "predicate": "memory",
+      "arity": 3,
+      "description": "Core memory fact."
+    },
+    {
+      "predicate": "elap",
+      "arity": 5,
+      "description": "ELAP multi-dimensional score."
+    }
+    // ...
+  ],
+  "prolog_source": "% Prolog code goes here...",
+  "rules": [
+    {
+      "id": "high_value",
+      "name": "High Value",
+      "query": "high_value(ID, Handle, Score).",
+      "result_vars": [
+        { "name": "ID", "type": "id" },
+        { "name": "Handle", "type": "atom" },
+        { "name": "Score", "type": "number" }
+      ],
+      "ui": { "type": "tab", "icon": "star", "color": "#6366f1" },
+      "trigger": { "type": "on_demand" },
+      "priority": "medium",
+      "category": "insight",
+      "enabled": true
+    }
+  ]
+}
+```
+
+The **schema** enforces:
+
+- Valid semver versions and timestamps in `meta`.
+- Well‑formed `fact_schema` entries (predicate name, arity, argument types).
+- That every `rule` has a valid `query`, `result_vars`, `ui`, `trigger`, `priority`, and `category`.
+
+## Writing Prolog rules
+
+Prolog rules let you express complex conditions over your memories in a compact, declarative way.
+
+The default ruleset ships with several example rules, such as:
+
+```prolog
+% Aggregate detail for overview tables
+detail(ID, Handle, Desc, Layer, Mode, Status) :-
+    memory(ID, Handle, Desc),
+    classification(ID, Layer),
+    ontology(ID, Mode, _),
+    vcs(ID, _, Status, _).
+
+% High-value memories: Logic + Abstraction + Pragmatism > 2.0
+high_value(ID, Handle, Score) :-
+    memory(ID, Handle, _),
+    elap(ID, _, L, A, P),
+    Score is L + A + P,
+    Score > 2.0.
+
+% Emotionally intense memories
+emotional_memory(ID, Handle, E, Desc) :-
+    memory(ID, Handle, Desc),
+    elap(ID, E, _, _, _),
+    E > 0.6.
+```
+
+Each rule is later exposed in the `rules` array as a query:
+
+- Prolog goal: `high_value(ID, Handle, Score).`
+- Result vars: `ID`, `Handle`, `Score` (with types and display labels).
+- UI config: how this shows up (tab, alert, badge, card, banner, dashboard).
+
+### Expressing conflicts with your core focus
+
+A central use case is detecting **conflicts with your current focus plan**.  
+For example:
+
+```prolog
+% Items that conflict with your active focus plan
+focus_conflict(PlanID, OtherID, OtherHandle, OtherDesc) :-
+    memory(PlanID, 'plan', _),
+    tag(PlanID, 'focus'),
+    vcs(PlanID, _, 'Active', _),
+    memory(OtherID, OtherHandle, OtherDesc),
+    PlanID \= OtherID,
+    OtherHandle \= 'plan',
+    OtherHandle \= 'user-goals',
+    vcs(OtherID, _, OtherStatus, _),
+    OtherStatus \= 'Backlog',
+    OtherStatus \= 'Active'.
+```
+
+This rule:
+
+- Finds the **active focus plan**.
+- Scans other memories that are neither backlog nor active.
+- Surfaces them as “unresolved” or conflicting items you should re‑prioritize.
+
+## How YoMemo executes rules
+
+At a high level, the execution pipeline looks like this:
+
+1. **Save memory**  
+   You save content through the client or MCP. The SDK attaches metadata, including optional ELAP scores and tags.
+2. **Build facts**  
+   The client converts each memory into Prolog facts according to `fact_schema` (e.g. `memory/3`, `elap/5`, `tag/2`, etc.).
+3. **Load ruleset**  
+   The client fetches the latest ruleset JSON from the API (with caching and fallback to a bundled default).
+4. **Load Prolog program**  
+   The `prolog_source` string is loaded into the local Prolog engine (Tau Prolog in the official client).
+5. **Select rules to run**  
+   Based on each rule’s `trigger` (`on_new_memory`, `on_demand`, `periodic`, `on_app_open`), the client chooses which queries to execute.
+6. **Execute queries**  
+   For each rule, the client runs the Prolog query, collects solutions, and maps variables to UI rows using `result_vars`.
+7. **Render insights**  
+   The UI renders insights according to the rule’s `ui` config (tabs, alerts, dashboards, etc.).
+
+<Aside type="tip">
+  The same ruleset JSON is used by both the server and the official client. Pro users can override the default ruleset via the web dashboard; clients automatically pick up the latest version.
+</Aside>
+
+## Editing and deploying custom rules
+
+The **Rule Engine** page in the YoMemo web dashboard (for **Pro** users) exposes the ruleset in two parts:
+
+- **Base ruleset JSON**  
+  A JSON editor for everything except <code>prolog_source</code>:
+  - <code>meta</code>
+  - <code>fact_schema</code>
+  - <code>rules</code> (queries, result vars, UI config, triggers, priority, category)
+- **Prolog rules (<code>prolog_source</code>)**  
+  A dedicated code block for the raw Prolog program.
+
+When you click **“Save ruleset”**:
+
+1. The dashboard merges the base JSON with the Prolog source into a single ruleset document.
+2. The server validates this ruleset against the canonical JSON Schema.
+3. Once validation succeeds, the updated ruleset becomes available to clients.
+
+Clients then sync this updated ruleset and start using your custom logic for future insights.
+
+## Example recipes
+
+Here are some example ideas you can implement with custom rules:
+
+### 1. Detect conflicts with your core focus
+
+Goal: surface memories that compete with your current focus plan.
+
+- Use `memory/3`, `tag/2`, and `vcs/4`.
+- Mark your main focus plan with the `focus` tag.
+- Treat items that are not backlog and not active as “unresolved” conflicts.
+
+This is what the built‑in `focus_conflict/4` rule does.
+
+### 2. Rank memories by long‑term value
+
+Goal: highlight the memories that most deserve your attention.
+
+- Use `elap/5` (`L`, `A`, and `P` dimensions).
+- Define a `high_value/3` rule that sums `L + A + P` and filters by a threshold.
+- Present results in a tab or dashboard, sorted by `Score`.
+
+This is useful for deciding where to invest deep work time.
+
+### 3. Track emotional hotspots
+
+Goal: understand where your emotional load is concentrated.
+
+- Use `elap/5` with the `E` dimension.
+- Define an `emotional_memory/4` rule that selects `E > 0.6`.
+- Optionally combine with tags or handles to see *which areas* of your life carry the most emotional weight.
+
+This can feed into health‑oriented insights and reflection prompts.
+
+## Best practices and caveats
+
+- **Start simple**  
+  Begin with small, focused rules (e.g. one rule for high value, one for emotional load) before building complex combinations.
+
+- **Treat `fact_schema` as a contract**  
+  Only rely on predicates and argument shapes declared in `fact_schema`.  
+  This ensures your rules remain compatible with how clients construct facts.
+
+- **Use descriptive names**  
+  Choose rule IDs and Prolog predicate names that explain their purpose, e.g. `high_value`, `focus_conflict`, `cross_domain_connections`.
+
+- **Consider performance**  
+  Very heavy rules (complex joins across many facts) may take longer to run, especially on large memory bases. Prefer incremental or filtered queries when possible.
+
+- **Test before deploying**  
+  Use a copy of the default ruleset as a starting point, make changes, and verify results in a small test memory set before rolling out to your main account or team.
+
+## Currently supported facts
+
+The default YoMemo ruleset declares the following Prolog predicates in its `fact_schema`.  
+These are the **facts you can rely on today** when writing custom rules:
+
+| Predicate | Arity | Arguments | Description |
+|----------|-------|-----------|-------------|
+| `memory/3` | 3 | `ID` (id), `Handle` (atom), `Description` (string) | Core memory fact. Each saved memory produces at least one `memory/3` fact. |
+| `elap/5` | 5 | `ID` (id), `E` (number), `L` (number), `A` (number), `P` (number) | ELAP multi‑dimensional score: Emotion, Logic, Abstraction, Pragmatism (each 0.0–1.0). |
+| `classification/2` | 2 | `ID` (id), `Layer` (atom) | Knowledge layer classification (e.g. L1–L5) derived from the semantic fingerprint. |
+| `tag/2` | 2 | `ID` (id), `Tag` (atom) | Memory tag. One memory can have many `tag/2` facts (one per tag). |
+| `ontology/3` | 3 | `ID` (id), `Mode` (atom), `Dependency` (string) | Ontology relation describing mode (`Evolving`, `Conditional`, `Invariant`, etc.) and dependency text. |
+| `vcs/4` | 4 | `ID` (id), `Stack` (string), `Status` (atom), `Bounds` (string) | Version‑control style status, such as `Active`, `Backlog`, `Concept`, `Draft`, plus stack and scope/bounds. |
+| `fact_deconstruction/2` | 2 | `ID` (id), `Text` (string) | Extracted factual content from the memory, for fine‑grained reasoning or search. |
+| `sentiment_deconstruction/2` | 2 | `ID` (id), `Text` (string) | Extracted sentiment‑oriented text, for more detailed emotional analysis beyond the scalar `E` score. |
+
+Future versions of the ruleset may introduce additional predicates. When that happens, they will appear in `fact_schema` and can be used in your custom `prolog_source` rules without changing client code.
+
