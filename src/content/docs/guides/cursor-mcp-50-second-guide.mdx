@@ -1,0 +1,45 @@
+---
+title: Cursor MCP in 50 Seconds
+description: Step-by-step guide to integrate YoMemo MCP in Cursor with the system prompt—matches the video walkthrough.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This guide follows the same flow as the [video walkthrough on the Python MCP page](/integrations/python-mcp/#video-walkthrough-50-seconds): sign in, configure MCP, add the system prompt, and test `save_memory`.
+
+## Video
+
+<video src="/videos/intro-compiled.mp4" controls width="100%" style="max-width: 720px; border-radius: 8px;">
+  Your browser does not support the video tag.
+</video>
+
+## Step-by-step
+
+<Steps>
+  <ol>
+    <li>
+      <h3>Sign in and get an API key</h3>
+      Open [yomemo.ai](https://yomemo.ai) and sign in with GitHub, email, or Google. Click **Settings** in the left menu, then **API Key**. If you're new, click **Rotate Key** to generate a new key. Keep your key and (if you use a key pair) your private PEM path for the next step.
+    </li>
+    <li>
+      <h3>Configure MCP in Cursor</h3>
+      Edit <code>~/.cursor/mcp.json</code> (Windows: <code>%APPDATA%\Cursor\User\mcp.json</code>) and add the YoMemo MCP server with your <code>MEMO_API_KEY</code> and <code>MEMO_PRIVATE_KEY_PATH</code>. Restart Cursor and ensure MCP is enabled.
+    </li>
+    <li>
+      <h3>Copy the system prompt</h3>
+      Go to [github.com/yomemoai/yomemo-prompts](https://github.com/yomemoai/yomemo-prompts), open <code>system-v0.0.0.txt</code> (or the latest protocol file), and copy the full contents.
+    </li>
+    <li>
+      <h3>Add the prompt as a Cursor rule</h3>
+      In Cursor, add that text as a **system rule** (e.g. in Rules for AI or your project/global rules). This makes the AI call <code>save_memory</code> at the right moments (fact updates, decisions, high-value discoveries).
+    </li>
+    <li>
+      <h3>Test save</h3>
+      In any Cursor chat, ask the AI to remember something (e.g. a preference or fact). Then open a new chat and ask it to recall—or use <code>load_memories</code>—to confirm the memory is stored and decrypted correctly.
+    </li>
+  </ol>
+</Steps>
+
+<Aside type="tip">
+  For full MCP config details (JSON snippets, env vars, troubleshooting), see [Python MCP Integration](/integrations/python-mcp/).
+</Aside>

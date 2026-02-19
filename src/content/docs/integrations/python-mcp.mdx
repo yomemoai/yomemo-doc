@@ -7,6 +7,26 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 YoMemo provides an out-of-the-box **MCP server** that enables AI assistants to save and retrieve encrypted memories. This is the easiest way to get started with YoMemo, especially if you're using Claude Desktop, Cursor, or other MCP-compatible tools.
 
+## Video walkthrough (~50 seconds)
+
+Watch the full flow: sign in at yomemo.ai, configure MCP in Cursor, add the system prompt, and test `save_memory`.
+
+<video src="/videos/intro-compiled.mp4" controls width="100%" style="max-width: 720px; border-radius: 8px;">
+  Your browser does not support the video tag.
+</video>
+
+**Steps in the video:**
+
+1. **Sign in and get an API key** — Open [yomemo.ai](https://yomemo.ai), sign in with GitHub, email, or Google. Go to **Settings** in the left menu, then **API Key**. New users click **Rotate Key** to generate a new key.
+2. **Configure MCP in Cursor** — In Cursor, add the YoMemo MCP server using your API key and the path to your private PEM file from the previous step, then enable it.
+3. **Copy the system prompt** — Open [github.com/yomemoai/yomemo-prompts](https://github.com/yomemoai/yomemo-prompts) and copy the system prompt (e.g. from `system-v0.0.0.txt`).
+4. **Add the prompt as a Cursor rule** — Paste that system prompt into Cursor as a system rule so the AI can automatically call `save_memory` at the right moments.
+5. **Test save** — In a Cursor chat, trigger a save (e.g. ask the AI to remember something), then open a new chat and use `load_memories` to confirm it worked.
+
+<Aside type="tip">
+  The steps below give the same flow in more detail with exact config paths and JSON snippets.
+</Aside>
+
 ## Prerequisites
 
 Before you begin, you need:

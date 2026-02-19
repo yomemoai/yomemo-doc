@@ -34,6 +34,7 @@ export default defineConfig({
           label: "Guides",
           items: [
             { label: "Getting Started", slug: "guides/getting-started" },
+            { label: "Cursor MCP in 50 Seconds", slug: "guides/cursor-mcp-50-second-guide" },
             { label: "Key Pairs (Public & Private)", slug: "guides/key-pairs" },
             { label: "Managing Memories", slug: "guides/managing-memories" },
             {
